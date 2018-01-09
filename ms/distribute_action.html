@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link href="./layui/css/layui.css" rel="stylesheet">
+    <title>权限分配</title>
+</head>
+<body style="padding: 10px; width: 400px;">
+
+<fieldset class="layui-elem-field layui-field-title" style="margin-top: 20px;">
+    <legend>权限分配</legend>
+</fieldset>
+<section style="margin: 0 auto; text-align: center;">
+    <table class="layui-hide" id="form-action" lay-filter="form-action"></table>
+    <button class="layui-btn" id="btn-save">保存</button>
+    <button class="layui-btn layui-btn-primary" id="btn-cancel">取消</button>
+</section>
+<script src="./layui/layui.js"></script>
+<script src="./js/jquery-3.2.1.js"></script>
+<script src="./js/base.js"></script>
+<script>
+
+    layui.use(['form', 'layer', 'table'], function () {
+
+        var form = layui.form;
+        var layer = layui.layer;
+        var table = layui.table;
+
+        $(document).ready(function () {
+
+            $('legend').html("正在为" + localStorage.getItem("group_name") + "分配权限");
+
+            doAjax({
+                action: window.actions
+                ,type: 'get'
+                ,success: function (data) {
+                    if (data.status === 500) {
+                        layer.msg(data.message);
+                    }
+                    var actions = data.data.data;
+                    var tabIns = table.render({
+                        elem: '#form-action'
+                        ,data: actions
+                        ,page: true
+                        ,cellMinWidth: 80
+                        ,cols: [[
+                            {type: 'checkbox'},
+                            {field: 'id', title: 'ID', width: 80, sort: true},
+                            {field: 'description', title: '权限名'},
+                            {field: 'action', title: 'action', width: 80},
+                            {field: 'type', title: '方法', width: 80}
+                        ]]
+                        ,done: function () {
+
+                        }
+                    });
+                    form.render();
+                }
+
+            });
+
+            $('#btn-save').on('click', function () {
+
+                var checkStatus = table.checkStatus('form-action')
+                    ,data = checkStatus.data;
+                if (data.length === 0) {
+                    layer.msg('至少选择一个权限');
+                    return false;
+                }
+                var ids = '';
+                $.each(data, function (index, element) {
+                    ids += element.id + ",";
+                });
+                console.log(ids);
+                doAjax({
+                    action: window.actiongroup
+                    ,type: 'put'
+                    ,data: {ids: ids, ugId: localStorage.getItem("group_id")}
+                    ,success: function (data) {
+                        if (data.status === 200) {
+                            var index = parent.layer.getFrameIndex(window.name);
+                            parent.layer.close(index);
+                        }
+                        layer.msg(data.message);
+                    }
+                });
+
+
+            });
+
+            $('#btn-cancel').on('click', function () {
+                var index = parent.layer.getFrameIndex(window.name);
+                parent.layer.close(index);
+            });
+        });
+
+    });
+</script>
+</body>
+</html>

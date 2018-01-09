@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <title>权限管理</title>
+    <link rel="stylesheet" href="./layui/css/layui.css">
+</head>
+<body class="layui-layout-body" style="padding: 10px;">
+
+<div class="layui-btn-group demoTable">
+    <button class="layui-btn" id="btn-add" data-type="getCheckLength">添加用户</button>
+    <button class="layui-btn" data-type="getCheckData">批量删除用户</button>
+    <button class="layui-btn" data-type="getCheckLength">批量导入用户</button>
+    <button class="layui-btn" id="btn-reload">
+        <i class="layui-icon">&#x1002;</i>
+    </button>
+</div>
+
+<div class="layui-tab layui-tab-card">
+    <ul class="layui-tab-title">
+        <li class="layui-this" id="tab-user">用户</li>
+        <li id="tab-user-group">用户组</li>
+        <li id="tab-action">权限资源</li>
+        <li>权限分配</li>
+    </ul>
+    <div class="layui-tab-content" style="height: auto;">
+        <div class="layui-tab-item layui-show"><table id="user-form" lay-filter="user-form"></table></div>
+        <div class="layui-tab-item"><table id="user-group-form" lay-filter="user-group-form"></table></div>
+        <div class="layui-tab-item"><table id="action-form" lay-filter="action-form"></table></div>
+        <div class="layui-tab-item"><table id="action-admin"></table></div>
+    </div>
+    <script type="text/html" id="admin-bar">
+        <a class="layui-btn layui-btn-normal layui-btn-xs" lay-event="group">用户组</a>
+        <a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a>
+        <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+    </script>
+    <script type="text/html" id="admin-group-bar">
+        <a class="layui-btn layui-btn-normal layui-btn-xs" lay-event="action">权限</a>
+        <a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a>
+        <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+    </script>
+    <script type="text/html" id="admin-action-bar">
+        <a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a>
+        <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+    </script>
+</div>
+
+<script src="./layui/layui.js"></script>
+<script src="./js/jquery-3.2.1.js"></script>
+<script src="./js/base.js"></script>
+<script>
+    //JavaScript代码区域
+    layui.use(['layer', 'element', 'table', 'form'], function(){
+        var element = layui.element;
+        var layer = layui.layer;
+        var table = layui.table;
+        var form = layui.form;
+
+        var tableOfUser, tableOfUserGroup, tableOfAction;
+
+        var content = '<form id="user-form2" class="layui-form layui-form-pane" style="width: 90%; margin: 0 auto; margin-top: 20px;">\n' +
+            '    <input type="hidden" id="id" name="id">\n' +
+            '    <div class="layui-container" style="width: 100px; margin-bottom: 20px; margin-top: 20px;">\n' +
+            '        <img name="header" id="header" src="./images/header.jpg" style="border-radius: 50%; height: 100px; width: 100px;" class="layui-img">\n' +
+            '    </div>\n' +
+            '    <div class="layui-form-item">\n' +
+            '        <label class="layui-form-label">用户名</label>\n' +
+            '        <div class="layui-input-block">\n' +
+            '            <input name="username" id="username" lay-verify="required" autocomplete="off" class="layui-input" type="text">\n' +
+            '        </div>\n' +
+            '    </div>\n' +
+            '    <div class="layui-form-item">\n' +
+            '        <label class="layui-form-label">签名</label>\n' +
+            '        <div class="layui-input-block">\n' +
+            '            <input name="signature" id="signature" lay-verify="required" autocomplete="off" class="layui-input" type="text">\n' +
+            '        </div>\n' +
+            '    </div>\n' +
+            '    <div class="layui-form-item">\n' +
+            '        <label class="layui-form-label">性别</label>\n' +
+            '        <div class="layui-input-block">\n' +
+            '            <input name="sex" value="0" title="男" type="radio">\n' +
+            '            <input name="sex" value="1" title="女" type="radio">\n' +
+            '            <input name="sex" value="2" title="保密"  type="radio">\n' +
+            '        </div>\n' +
+            '    </div>\n' +
+            '    <div class="layui-form-item">\n' +
+            '        <label class="layui-form-label">邮箱</label>\n' +
+            '        <div class="layui-input-block">\n' +
+            '            <input name="email" id="email" lay-verify="required" autocomplete="off" class="layui-input" type="text">\n' +
+            '        </div>\n' +
+            '    </div>\n' +
+            '    <div class="layui-form-item">\n' +
+            '        <label class="layui-form-label">电话</label>\n' +
+            '        <div class="layui-input-block">\n' +
+            '            <input name="phone" id="phone" lay-verify="required" autocomplete="off" class="layui-input" type="text">\n' +
+            '        </div>\n' +
+            '    </div>\n' +
+            '</form>';
+
+        var content_of_user_group =
+            '<form id="user-group-form2" class="layui-form layui-form-pane" style="width: 90%; margin: 0 auto; margin-top: 20px;">\n' +
+            '    <input type="hidden" id="id" name="id">\n' +
+            '    <div class="layui-form-item">\n' +
+            '        <label class="layui-form-label">用户组名称</label>\n' +
+            '        <div class="layui-input-block">\n' +
+            '            <input name="groupName" id="group-name" lay-verify="required" autocomplete="off" class="layui-input" type="text">\n' +
+            '        </div>\n' +
+            '    </div>\n' +
+            '    <div class="layui-form-item">\n' +
+            '        <label class="layui-form-label">组描述</label>\n' +
+            '        <div class="layui-input-block">\n' +
+            '            <input name="groupInfo" id="group-info" lay-verify="required" autocomplete="off" class="layui-input" type="text">\n' +
+            '        </div>\n' +
+            '    </div>\n' +
+            '    <div class="layui-form-item">\n' +
+            '        <label class="layui-form-label">排序</label>\n' +
+            '        <div class="layui-input-block">\n' +
+            '            <input name="sort" id="sort" lay-verify="required" autocomplete="off" class="layui-input" type="text">\n' +
+            '        </div>\n' +
+            '    </div>\n' +
+            '</form>';
+
+        var content_of_action =
+            '<form id="action-form" class="layui-form layui-form-pane" style="width: 90%; margin: 0 auto; margin-top: 20px;">\n' +
+            '    <input type="hidden" name="id" id="id">\n' +
+            '    <div class="layui-form-item">\n' +
+            '        <label class="layui-form-label">权限名</label>\n' +
+            '        <div class="layui-input-block">\n' +
+            '            <input name="description" id="description" lay-verify="required" autocomplete="off" class="layui-input" type="text">\n' +
+            '        </div>\n' +
+            '    </div>\n' +
+            '    <div class="layui-form-item">\n' +
+            '        <label class="layui-form-label">action</label>\n' +
+            '        <div class="layui-input-block">\n' +
+            '            <input name="action" id="action" lay-verify="required" autocomplete="off" class="layui-input" type="text">\n' +
+            '        </div>\n' +
+            '    </div>\n' +
+            '    <div class="layui-form-item">\n' +
+            '        <label class="layui-form-label">方法</label>\n' +
+            '        <div class="layui-input-block">\n' +
+            '            <select name="type">\n' +
+            '                <option value="" selected>请选择方法</option>\n' +
+            '                <option value="get">GET</option>\n' +
+            '                <option value="post">POST</option>\n' +
+            '                <option value="put">PUT</option>\n' +
+            '                <option value="delete">DELETE</option>\n' +
+            '            </select>\n' +
+            '        </div>\n' +
+            '    </div>\n' +
+            '</form>';
+
+
+        function renderTable(opts) {
+            return table.render({
+                elem: opts['id']
+                ,data: opts['data']
+                ,page: true
+                ,cols: opts['cols']
+                ,done: opts['done']
+            });
+        }
+
+
+        $(document).ready(function () {
+            
+            /**
+             * load the first table of users
+             */
+            doAjax({
+                action: window.users
+                ,type: 'get'
+                ,async: false
+                ,success: function (data) {
+                    if (data.status === 200) {
+                        tableOfUser = renderTable({
+                            id: '#user-form'
+                            ,data: data.data.data
+                            ,cols: [[
+                                {field: 'id', title: 'ID', width: 80, sort: true},
+                                {field: 'username', title: '用户名', width: 80},
+                                {field: 'sex', title: '性别', width: 80},
+                                {field: 'email', title: '邮箱'},
+                                {field: 'phone', title: '电话'},
+                                {fixed: 'right', width: 165, align:'center', toolbar: '#admin-bar'}
+                            ]]
+                            ,done: function () {
+
+                            }
+                        });
+                    } else {
+                        layer.msg(data.message);
+                    }
+                }
+            });
+
+            /**
+             * load the second table of userGroups
+             */
+            doAjax({
+                action: window.usergroups
+                ,type: 'get'
+                ,async: false
+                ,success: function (data) {
+                    if (data.status === 200) {
+                        tableOfUserGroup = renderTable({
+                            id: '#user-group-form'
+                            , data: data.data.data
+                            , cols: [[
+                                {field: 'id', title: 'ID', width: 80, sort: true},
+                                {field: 'groupName', title: '用户组', width: 80},
+                                {field: 'groupInfo', title: '组描述'},
+                                {field: 'createrName', title: '创建者', width: 120},
+                                {field: 'createTime', title: '创建时间', minWidth: 120},
+                                {field: 'sort', title: '排序', width: 120, sort: true},
+                                {fixed: 'right', width: 165, align: 'center', toolbar: '#admin-group-bar'}
+                            ]],
+                            done: function () {
+
+                            }
+                        });
+                    } else {
+                        layer.msg(data.message);
+                    }
+                }
+            });
+
+            /**
+             * load the third table of actions
+             */
+            doAjax({
+                action: window.actions
+                ,type: 'get'
+                ,async: false
+                ,success: function (data) {
+                    if (data.status === 200) {
+                        tableOfAction = renderTable({
+                            id: '#action-form'
+                            , data: data.data.data
+                            , cols: [[
+                                {field: 'id', title: 'ID', width: 80, sort: true},
+                                {field: 'action', title: 'action'},
+                                {field: 'type', title: '方法', width: 120},
+                                {field: 'description', title: '描述', minWidth: 120},
+                                {field: 'visiable', title: '状态', width: 120},
+                                {fixed: 'right', width: 165, align: 'center', toolbar: '#admin-action-bar'}
+                            ]]
+                            , done: function () {
+                                layer.msg(data.message);
+                            }
+                        });
+                    } else {
+                        layer.msg(data.message);
+                    }
+                }
+            });
+
+            $('#btn-reload').on('click', function () {
+
+                reloadTableIns({
+                    tabIns: tableOfUser
+                    ,action: window.users
+                });
+
+                reloadTableIns({
+                    tabIns: tableOfUserGroup
+                    ,action: window.usergroups
+                });
+
+                reloadTableIns({
+                    tabIns: tableOfAction
+                    ,action: window.actions
+                });
+
+            });
+
+            table.on('tool(user-form)', function (obj) {
+                var data = obj.data;
+                var layEvent = obj.event;
+                //console.log(data);
+                if (layEvent === 'del') {
+                    layer.confirm('Are you sure?', {
+                       icon: 3,
+                       skin: 'layui-layer-molv',
+                       btn: ['确定', '取消']
+                    }, function () {
+                        delObject({
+                            action: window.user + '/' + data.id
+                            ,obj: obj
+                        });
+                    });
+                } else if (layEvent === 'edit') {
+                    var index = layer.open({
+                        type: 1,
+                        skin: 'layui-layer-molv', //加上边框
+                        area: ['420px', '520px'], //宽高
+                        content: content,
+                        btn: ['保存', '取消'],
+                        yes: function () {
+                            updateObject({
+                                action: window.user
+                                ,obj: obj
+                                ,data: $('#user-form2').serializeArray()
+                                ,update: {
+                                    username: $('#username').val()
+                                    ,signature: $('#signature').val()
+                                    ,sex: $('#sex').val()
+                                    ,email: $('#email').val()
+                                    ,phone: $('#phone').val()
+                                }
+                                ,index: index
+                            });
+                        }
+                    });
+                    $('#id').val(data.id);
+                    $('#username').val(data.username);
+                    $('#signature').val(data.signature);
+                    $("[name='sex']").each(function (index, element) {
+                        if ($(this).val() == data.sex) {
+                            $(this).attr('checked', true);
+                        }
+                    });
+                    $('#email').val(data.email);
+                    $('#phone').val(data.phone);
+                } else if (layEvent === 'group') {
+                    $('')
+                }
+                form.render();
+            });
+
+            table.on('tool(user-group-form)', function (obj) {
+                var data = obj.data;
+                var layEvent = obj.event;
+                if (layEvent === 'edit') {
+                    var index = layer.open({
+                        type: 1,
+                        skin: 'layui-layer-molv', //加上边框
+                        area: ['420px', '300px'], //宽高
+                        content: content_of_user_group,
+                        btn: ['保存', '取消'],
+                        yes: function () {
+                            updateObject({
+                                action: window.usergroup
+                                ,obj: obj
+                                ,data: $('#user-group-form2').serializeArray()
+                                ,update: {
+                                    groupName: $('#group-name').val()
+                                    ,groupInfo: $('#group-info').val()
+                                    ,sort: $('#sort').val()
+                                }
+                                ,index: index
+                            });
+                        }
+                    });
+                    $('#id').val(data.id);
+                    $('#group-name').val(data.groupName);
+                    $('#group-info').val(data.groupInfo);
+                    $('#sort').val(data.sort);
+                    form.render();
+                } else if (layEvent === 'del') {
+                    layer.confirm('你确定要这么做吗?', {
+                        icon: 3,
+                        skin: 'layui-layer-molv',
+                        btn: ['确定', '取消']
+                    }, function () {
+                        delObject({
+                            action: window.usergroup + '/' + data.id
+                            ,obj: obj
+                        });
+                    });
+                } else if (layEvent === 'action') {
+                    //distribute actions for user group
+                    localStorage.setItem("group_name", data.groupName);
+                    localStorage.setItem("group_id", data.id);
+                    layer.open({
+                        type: 2,
+                        title: '权限分配',
+                        shadeClose: true,
+                        shade: 0.8,
+                        area: ['440px', '520px'],
+                        content: './distribute_action.html'
+                    });
+                    form.render();
+                }
+            });
+
+            table.on('tool(action-form)', function (obj) {
+                var data = obj.data;
+                var layEvent = obj.event;
+                if (layEvent === 'edit') {
+                    var index = layer.open({
+                        title: '编辑权限信息',
+                        type: 1,
+                        skin: 'layui-layer-molv',
+                        area: ['420px', '300px'], //宽高
+                        content: content_of_action,
+                        btn: ['保存', '取消'],
+                        yes: function () {
+                            doAjax({
+                                action: window.action
+                                ,type: 'post'
+                                ,data: {
+                                    id: $("#id").val()
+                                    ,description: $("input[name='description']").val()
+                                    , action: $("input[name='action']").val()
+                                    , type: $("select[name='type']").val()
+                                }
+                                ,success: function (data) {
+                                    if (data.status === 200) {
+                                        obj.update({
+                                            description: $("input[name='description']").val()
+                                            , action: $("input[name='action']").val()
+                                            , type: $("select[name='type']").val()
+                                        });
+                                        layer.close(index);
+                                    }
+                                    layer.msg(data.message);
+                                }
+                            });
+                        }
+                    });
+                    $('#id').val(data.id);
+                    $('#description').val(data.description);
+                    $('#action').val(data.action);
+                    $('#type').val(data.type);
+                    form.render();
+                } else if (layEvent === 'del') {
+                    layer.confirm('你确定要这样做吗？', {
+                        btn: ['确定','取消'] //按钮
+                    }, function(){
+                        doAjax({
+                            action: window.action + "/" + data.id
+                            ,type: 'delete'
+                            ,success: function (data) {
+                                if (data.status === 200) {
+                                    obj.del();
+                                }
+                                layer.msg(data.message);
+                            }
+                        });
+                    });
+                }
+
+            });
+
+            $('#tab-action').on('click', function () {
+                $('#btn-add').html('添加权限');
+                $('#btn-add').unbind('click');
+                $('#btn-add').on('click', function () {
+
+                    //打开添加界面
+                    var index = layer.open({
+                        type: 1,
+                        title: '添加权限',
+                        skin: 'layui-layer-molv', //加上边框
+                        area: ['420px', '300px'], //宽高
+                        content: content_of_action,
+                        btn: ['保存', '取消'],
+                        yes: function () {
+                            doAjax({
+                                action: window.action
+                                ,data: {
+                                    description: $("input[name='description']").val()
+                                    ,action: $("input[name='action']").val()
+                                    ,type: $("select[name='type']").val()
+                                }
+                                ,type: 'put'
+                                ,success: function (data) {
+                                    if (data.status === 200) {
+                                        reloadTableIns({
+                                            tabIns: tableOfAction
+                                            ,action: window.actions
+                                        });
+                                        layer.close(index);
+                                    }
+                                    layer.msg(data.message);
+                                }
+                            });
+                        }
+                    });
+                    form.render();
+                });
+
+            });
+
+            $('#tab-user').on('click', function () {
+                $('#btn-add').html('添加用户');
+                $('#btn-add').unbind('click');
+            });
+
+            $('#tab-user-group').on('click', function () {
+                $('#btn-add').html('添加用户组');
+                $('#btn-add').unbind('click');
+                $('#btn-add').on('click', function () {
+                    //打开添加界面
+                    var index = layer.open({
+                        type: 1,
+                        title: '添加用户组',
+                        skin: 'layui-layer-molv', //加上边框
+                        area: ['500px', '500px'], //宽高
+                        content: content_of_user_group,
+                        btn: ['保存', '取消'],
+                        yes: function () {
+                            doAjax({
+                                action: window.usergroup
+                                ,data: $('#user-group-form').serialize()
+                                ,type: 'put'
+                                ,success: function (data) {
+                                    if (data.status === 200) {
+                                        reloadTableIns({
+                                            tabIns: tableOfUserGroup
+                                            ,action: window.usergroups
+                                        });
+                                        layer.close(index);
+                                    }
+                                    layer.msg(data.message);
+                                }
+                            });
+                        }
+                    });
+
+                    form.render();
+                });
+            });
+
+        });
+
+    });
+</script>
+</body>
+</html>

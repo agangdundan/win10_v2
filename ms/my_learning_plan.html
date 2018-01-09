@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>layui</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link rel="stylesheet" href="./layui/css/layui.css"  media="all">
+</head>
+
+<div class="layui-container" id="learning-plan-columns" style="position: fixed; right: 30px; bottom: 85px; width: 150px; background-color: #d7d7d7; z-index: 9999; opacity: .95; border-radius: 2px; display: none;">
+    <ul></ul>
+</div>
+
+<form class="layui-form layui-form-pane" id="learning-plan-form" style="text-align: center; margin: 0 auto; padding: 10px; width: 600px; background: #eeeeee">
+    <div class="layui-tab-title" style="margin-bottom: 10px;">
+        <h1 style="font-size: 20px;"><b>学习规划表</b></h1>
+    </div>
+    <div>
+        <div class="layui-inline" style="width: 400px;">
+            <div class="layui-form-item" style="margin-top: 25px; ">
+                <label class="layui-form-label layui-bg-green">姓名</label>
+                <div class="layui-input-block">
+                    <input name="username" id="username" disabled lay-verify="required" autocomplete="off" placeholder="请输入姓名" class="layui-input" type="text">
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label layui-bg-green">性别</label>
+                <div class="layui-input-block">
+                    <input name="sex" id="sex" disabled lay-verify="required" placeholder="请输入性别" autocomplete="off" class="layui-input" type="text">
+                </div>
+            </div>
+        </div>
+        <div class="layui-inline">
+            <img src="./images/header.jpg" style="height: 100px; width: 100px; margin-left: 50px; margin-right: 45px;">
+        </div>
+    </div>
+    <div>
+        <div class="layui-form-item" style="margin-top: 10px; ">
+            <label class="layui-form-label layui-bg-green">联系方式</label>
+            <div class="layui-input-block">
+                <input name="phone" id="phone" disabled lay-verify="required" autocomplete="off" placeholder="请输入班级" class="layui-input" type="text">
+            </div>
+        </div>
+        <div class="layui-form-item" style="margin-top: 10px; ">
+            <label class="layui-form-label layui-bg-green">填写时间</label>
+            <div class="layui-input-block">
+                <input name="createTime" id="createTime" disabled lay-verify="required" autocomplete="off" placeholder="请输入时间" class="layui-input" type="text">
+            </div>
+        </div>
+    </div>
+</form>
+<script src="./layui/layui.js" charset="utf-8"></script>
+<script src="./js/jquery-3.2.1.js" charset="utf-8"></script>
+<script src="../js/win10.child.js"></script>
+<script src="./js/base.js" charset="utf-8"></script>
+
+<script>
+    layui.use(['layer', 'util'], function(){
+
+        var layer = layui.layer;
+        var util = layui.util;
+
+
+        util.fixbar({
+            bar1: '&#xe654;'
+            ,css: {right: 30, bottom: 30}
+            ,bgcolor: '#393D49'
+            ,click: function(type){
+                if(type === 'bar1'){
+                    $('#learning-plan-columns > ul').html('');
+                    $.ajax({
+                        url: path + 'learningplan/template',
+                        type: 'get',
+                        dataType: 'json',
+                        beforeSend: function (xhr) {
+                            xhr.setRequestHeader('Authorization', localStorage.getItem('token'));
+                        },
+                        success: function (data) {
+
+                            if (data.status === 200) {
+
+                                console.log(data);
+                                var columns = data.data.data;
+                                $.each(columns, function (index, elem) {
+                                    var content = '<li class="layui-field-title" style="color: #393D49;" onclick="onLearningPlanColumnClick(this)"><span>' + elem.learningplancolumnName + '</span></li><li class="layui-tab-title" style="height: 1px; background-color: #d7d7d7"> </li>';
+                                    $('#learning-plan-columns > ul').append(content);
+                                });
+                                $('#learning-plan-columns').show(500);
+                            }
+                        }
+                    });
+                }
+            }
+        });
+
+        $(document).ready(function () {
+
+            var token = localStorage.getItem('token');
+            if (token.length === 0) {
+                layer.alert('您还没有登录，请先登录！', {
+                    skin: 'layui-layer-molv',
+                    closeBtn: 0
+                }, function () {
+                    Win10_child.openUrl('./ms/login.html',
+                        '<img class=\'icon\' src=\'./img/icon/win10.png\'/>登录');
+                    Win10_child.close();
+                });
+            } else {
+
+                $.ajax({
+                    url: path + 'learningplan'
+                    ,type: 'GET'
+                    ,dataType: 'json'
+                    ,data: {token: token}
+                    ,success: function (data) {
+                        if (data.status === 500) {
+                            layer.alert(data.message, {
+                                skin: 'layui-layer-molv',
+                                closeBtn: 0
+                            }, function () {
+                                Win10_child.openUrl('./ms/login.html',
+                                    '<img class=\'icon\' src=\'./img/icon/win10.png\'/>登录');
+                                Win10_child.close();
+                            });
+                        } else {
+
+                            var user = data.data.user;
+                            var form = data.data.code;
+
+                            localStorage.setItem('currFormId', form.id);
+
+                            $('#username').val(user.username);
+                            var sex;
+                            if (user.sex === 0) {
+                                sex = "男";
+                            } else if (user.sex === 1) {
+                                sex = "女";
+                            } else if (user.sex === 2) {
+                                sex = "保密";
+                            }
+                            $('#sex').val(sex);
+                            $('#phone').val(user.phone);
+                            $('#createTime').val(form.createTime);
+                            var content_items = data.data.data;
+                            console.log(content_items);
+                            $.each(content_items, function (index, elem) {
+
+                                var column_content =
+                                    '       <form class="layui-form-item layui-form-text layui-bg-green">\n' +
+                                    '            <label class="layui-form-label layui-bg-green">' + elem.learningplancolumnName + '</label>\n' +
+                                    '            <input type="hidden" name="id" value=' + elem.id + '>\n' +
+                                    '            <input type="hidden" name="learningplanformId" value=' + elem.learningplanformId + '>\n' +
+                                    '            <input type="hidden" name="learningplancolumnName" value=' + elem.learningplancolumnName + '>\n' +
+                                    '            <input type="hidden" name="learningplancolumnId" value=' + elem.learningplancolumnId + '>\n' +
+                                    '            <div class="layui-input-block">\n' +
+                                    '                <textarea placeholder="请输入内容" name="learningplancolumnContent" class="layui-textarea" onblur="saveLearningPlanColumnContent(this)">' + elem.learningplancolumnContent + '</textarea>\n' +
+                                    '            </div>\n' +
+                                    '        </form>';
+
+                                $('#learning-plan-form').append(column_content);
+
+                            });
+
+                        }
+                        if (form.approveContent.length !== 0) {
+                            var approve_content =
+                                '       <form class="layui-form-item layui-form-text layui-bg-orange" id="approve-content">\n' +
+                                '            <label class="layui-form-label layui-bg-orange">审批内容</label>\n' +
+                                '            <div class="layui-input-block">\n' +
+                                '                <textarea disabled placeholder="请输入内容" class="layui-textarea">' + form.approveContent + '</textarea>\n' +
+                                '            </div>\n' +
+                                '        </form>';
+                            $('#learning-plan-form').append(approve_content)
+                        }
+
+                        var btns_content =
+                            '    <div class="layui-form-item" id="btns-content">\n' +
+                            '        <div class="layui-input-block" style="text-align: center; margin: 0 auto;">\n' +
+                            '            <a class="layui-btn" href="javascript:void(0);" id="btn-save">保存</a>\n' +
+                            '            <a class="layui-btn layui-btn-primary" id="btn-close">关闭</a>\n' +
+                            '        </div>\n' +
+                            '    </div>\n';
+
+                        $('#learning-plan-form').append(btns_content);
+
+                        $('#btn-close').on('click', function () {
+                            Win10_child.close();
+                        });
+
+                        $('#btn-save').on('click',function () {
+                            Win10_parent.newMsg('保存成功', '我的规划表');
+                            Win10_child.close();
+                        });
+                    }
+                });
+            }
+        });
+    });
+</script>
+
+</body>
+</html>

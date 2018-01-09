@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+
+    <!-- Include external CSS. -->
+    <link href="../plugins/font-awesome-4.7.0/css/font-awesome.min.css" rel="stylesheet" />
+    <link href="../plugins/codemirror/codemirror.css" rel="stylesheet">
+
+    <!-- Include Editor style. -->
+    <link href="../plugins/froala_editor/css/froala_editor.pkgd.min.css" rel="stylesheet" type="text/css" />
+    <link href="../plugins/froala_editor/css/froala_style.min.css" rel="stylesheet" type="text/css" />
+
+    <!-- layui style -->
+    <link href="./layui/css/layui.css" rel="stylesheet">
+
+</head>
+
+<body>
+<!-- Create a tag that we will use as the editable area. -->
+<!-- You can use a div tag as well. -->
+<form id="form-content">
+    <input type="hidden" name="id" id="id">
+    <textarea id="message" name="message"></textarea>
+    <div class="layui-container" style="text-align: center; margin: 0 auto; margin-top: 10px;">
+        <a class="layui-btn" id="btn-save">保存</a>
+        <a class="layui-btn layui-btn-primary" id="btn-clear">清空</a>
+    </div>
+</form>
+<!-- Include external JS libs. -->
+<script type="text/javascript" src="./js/jquery-3.2.1.js"></script>
+<script src="./js/base.js"></script>
+<script type="text/javascript" src="../plugins/codemirror/codemirror.js"></script>
+<script type="text/javascript" src="../plugins/codemirror/xml.js"></script>
+
+<!-- Include Editor JS files. -->
+<script type="text/javascript" src="../plugins/froala_editor/js/froala_editor.pkgd.min.js"></script>
+<script src="../plugins/froala_editor/js/languages/zh_cn.js"></script>
+<!-- Initialize the editor. -->
+
+<!-- Layui JS files -->
+<script src="./layui/layui.js"></script>
+
+<script>
+
+    $(function() {
+
+        $('textarea').froalaEditor({
+            language: 'zh_cn'
+        });
+
+        layui.use('layer', function () {
+
+
+            $('#btn-save').on('click', function () {
+                var message = $('textarea').froalaEditor('html.get', true);
+                var id = $('#id').val();
+                var type;
+                var data = $('#form-content').serialize();
+                if (id === null || id.length === 0) {
+                    //保存操作
+                    type = 'put';
+                } else {
+                    //更新操作
+                    type = 'post';
+                }
+                $.ajax({
+                    url: path + 'msg'
+                    ,type: type
+                    ,dataType: 'json'
+                    ,data: data
+                    ,beforeSend: function (xhr) {
+                        xhr.setRequestHeader('Authorization', localStorage.getItem('token'));
+                    }
+                    ,success: function (data) {
+                        layer.msg(data.message);
+                    }
+                });
+                console.log(content);
+
+            });
+
+
+        });
+
+    });
+
+</script>
+</body>
+</html>

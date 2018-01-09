@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link href="./layui/css/layui.css" rel="stylesheet">
+    <title>图书管理</title>
+</head>
+<body style="padding: 10px; margin: 0 auto;">
+
+<div class="layui-btn-group demoTable">
+    <button class="layui-btn" id="btn-add" data-type="getCheckLength">添加图书</button>
+    <button class="layui-btn" data-type="getCheckData">批量删除图书</button>
+    <button class="layui-btn" data-type="getCheckLength">批量导入图书</button>
+    <button class="layui-btn" id="btn-reload">
+        <i class="layui-icon">&#x1002;</i>
+    </button>
+</div>
+<div class="demoTable layui-inline layui-layout-right" style="margin-top: 10px; margin-right: 10px;">
+    搜索ID：
+    <div class="layui-inline">
+        <input class="layui-input" name="bookName" id="demoReload" autocomplete="off">
+    </div>
+    <button class="layui-btn" data-type="reload">搜索</button>
+</div>
+
+<table class="layui-hide" id="admin-book" lay-filter="admin-book"></table>
+
+<script type="text/html" id="admin-book-bar">
+    <a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a>
+    <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+</script>
+
+
+<script src="./js/jquery-3.2.1.js"></script>
+<script src="./layui/layui.js"></script>
+<script src="../js/win10.child.js"></script>
+<script src="./js/base.js"></script>
+<script>
+
+    //JS Code Here
+    $(document).ready(function () {
+
+        var book_content =
+            '<form id="book-form" class="layui-form layui-form-pane" style="width: 90%; margin: 0 auto; margin-top: 20px; text-align: center;">\n' +
+            '\n' +
+            '    <input type="hidden" name="id" id="id">\n' +
+            '\n' +
+            '    <div class="layui-container layui-inline" style="width: 45%;">\n' +
+            '        <div class="layui-form-item">\n' +
+            '            <label class="layui-form-label">书名</label>\n' +
+            '            <div class="layui-input-block">\n' +
+            '                <input name="bookName" id="bookName" lay-verify="required" autocomplete="off" class="layui-input" type="text">\n' +
+            '            </div>\n' +
+            '        </div>\n' +
+            '        <div class="layui-form-item">\n' +
+            '            <label class="layui-form-label">作者</label>\n' +
+            '            <div class="layui-input-block">\n' +
+            '                <input name="author" id="author" lay-verify="required" autocomplete="off" class="layui-input" type="text">\n' +
+            '            </div>\n' +
+            '        </div>\n' +
+            '        <div class="layui-form-item">\n' +
+            '            <label class="layui-form-label">出版社</label>\n' +
+            '            <div class="layui-input-block">\n' +
+            '                <input name="publish" id="publish" lay-verify="required" autocomplete="off" class="layui-input" type="text">\n' +
+            '            </div>\n' +
+            '        </div>\n' +
+            '        <div class="layui-form-item">\n' +
+            '            <label class="layui-form-label">类目</label>\n' +
+            '            <div class="layui-input-block">\n' +
+            '                <input name="category" id="category" lay-verify="required" autocomplete="off" class="layui-input" type="text">\n' +
+            '            </div>\n' +
+            '        </div>\n' +
+            '        <div class="layui-form-item">\n' +
+            '            <label class="layui-form-label">状态</label>\n' +
+            '            <div class="layui-input-block">\n' +
+            '                <input name="status" id="status" lay-verify="required" autocomplete="off" class="layui-input" type="text">\n' +
+            '            </div>\n' +
+            '        </div>\n' +
+            '        <div class="layui-form-item">\n' +
+            '            <label class="layui-form-label">创建时间</label>\n' +
+            '            <div class="layui-input-block">\n' +
+            '                <input name="createTime" id="createTime" lay-verify="required" disabled autocomplete="off" class="layui-input" type="text">\n' +
+            '            </div>\n' +
+            '        </div>\n' +
+            '        <div class="layui-form-item">\n' +
+            '            <label class="layui-form-label">管理员</label>\n' +
+            '            <div class="layui-input-block">\n' +
+            '                <input name="adminName" id="adminName" lay-verify="required" disabled autocomplete="off" class="layui-input" type="text">\n' +
+            '            </div>\n' +
+            '        </div>\n' +
+            '\n' +
+            '        <div class="layui-form-item" style="margin: 0 auto; margin-top: 35px; text-align: center;">\n' +
+            '            <div>\n' +
+            '                <a class="layui-btn" href="javascript:void(0);" id="btn-save">保存</a>\n' +
+            '                <input type="reset" class="layui-btn layui-btn-primary" value="重置">\n' +
+            '            </div>\n' +
+            '        </div>\n' +
+            '\n' +
+            '    </div>\n' +
+            '\n' +
+            '    <div class="layui-container layui-inline" style="width: 45%; margin-bottom: 20px;">\n' +
+            '        <img name="image" id="image" src="./images/book/longzu.jpeg" style="border-radius: 5%; height: 400px;" class="layui-img layui-upload-img">\n' +
+            '        <div style="margin: 0 auto; text-align: center; margin-top: 10px;">\n' +
+            '            <button type="button" class="layui-btn layui-btn-danger layui-inline" id="upload-image"><i class="layui-icon"></i>上传图片</button>\n' +
+            '            <p class="layui-inline layui-word-aux">\n' +
+            '                图片大小2M以内\n' +
+            '            </p>\n' +
+            '        </div>\n' +
+            '    </div>\n' +
+            '\n' +
+            '\n' +
+            '</form>';
+
+        layui.use(['layer', 'form', 'table', 'upload'], function () {
+
+            var layer = layui.layer,
+                form = layui.form,
+                table = layui.table,
+                upload = layui.upload;
+
+            var tableIns;
+
+            $.ajax({
+
+                url: path + books
+                ,type: 'get'
+                ,dataType: 'json'
+                ,beforeSend: function (xhr) {
+                    xhr.setRequestHeader(authorization, localStorage.getItem('token'));
+                }
+                ,success: function (data) {
+                    if (data.status === 200) {
+                        var books = data.data.data;
+
+                        tableIns = table.render({
+                            elem: '#admin-book'
+                            ,cols: [[ //标题栏
+                                {field: 'id', title: 'ID', width: 80, sort: true}
+                                ,{field: 'bookName', title: '书名', width: 180}
+                                ,{field: 'image', title: '封面', width: 80}
+                                ,{field: 'category', title: '分类', width: 80}
+                                ,{field: 'author', title: '作者', minWidth: 80}
+                                ,{field: 'publish', title: '出版社', minWidth: 80}
+                                ,{field: 'status', title: '状态', width: 80, sort: true}
+                                ,{field: 'createTime', title: '添加日期', minWidth: 100}
+                                ,{field: 'adminName', title: '管理员', width: 100}
+                                ,{fixed: 'right', width: 165, align:'center', toolbar: '#admin-book-bar'}
+                            ]]
+                            ,data: books
+                            ,page: true
+                        });
+                    }
+
+                    layer.msg(data.message);
+                }
+
+            });
+
+            //监听右部工具栏事件
+            table.on('tool(admin-book)', function (obj) {
+
+                var book = obj.data;
+                var layEvent = obj.event;
+                var index;
+                console.log(book);
+                if (layEvent === 'edit') {
+
+                    index = layer.open({
+                        type: 1,
+                        title: '修改信息',
+                        shadeClose: true,
+                        shade: 0.8,
+                        area: ['850px', '550px'],
+                        content: book_content
+                    });
+
+                    form.render();
+                    uploadFile();
+
+                    $('#id').val(book.id);
+                    $('#bookName').val(book.bookName);
+                    $('#author').val(book.author);
+                    $('#publish').val(book.publish);
+                    $('#category').val(book.category);
+                    $('#status').val(book.status);
+                    $('#createTime').val(book.createTime);
+                    $('#adminName').val(book.adminName);
+
+                    $('#btn-save').on('click', function () {
+
+                        $.ajax({
+                            url: path + 'book'
+                            ,type: 'post'
+                            ,dataType: 'json'
+                            ,data: $('#book-form').serialize()
+                            ,beforeSend: function (xhr) {
+                                xhr.setRequestHeader(authorization, localStorage.getItem('token'));
+                            }
+                            ,success: function (data) {
+                                if (data.status === 200) {
+                                    obj.update({
+                                        bookName: $('#bookName').val(),
+                                        author: $('#author').val(),
+                                        publish: $('#publish').val(),
+                                        category: $('#category').val(),
+                                        status: $('#status').val()
+                                    });
+                                    layer.close(index);
+                                }
+                                layer.msg(data.message);
+                            }
+                        });
+
+                    });
+
+
+                } else if (layEvent === 'del') {
+
+                    layer.confirm('确定要删除么？', function (index) {
+                        $.ajax({
+                            url: path + 'book/' + book.id,
+                            type: 'delete'
+                            ,dataType: 'json'
+                            ,beforeSend: function (xhr) {
+                                xhr.setRequestHeader(authorization, localStorage.getItem('token'));
+                            }
+                            ,success: function (data) {
+                                if (data.status === 200) {
+                                    layer.close(index);
+                                    obj.del(); //删除对应行（tr）的DOM结构，并更新缓存
+                                }
+                                layer.msg(data.message);
+                            }
+                        });
+                    });
+                }
+
+            });
+
+            $('#btn-add').on('click',function () {
+
+                var index = layer.open({
+                    type: 1,
+                    title: '修改信息',
+                    shadeClose: true,
+                    shade: 0.8,
+                    area: ['850px', '600px'],
+                    content: book_content,
+                    btn: ['保存', '取消'],
+                    yes: function (index, layero) {
+                        $.ajax({
+                            url: path + 'book'
+                            ,type: 'put'
+                            ,dataType: 'json'
+                            ,data: $('#book-form').serializeArray()
+                            ,beforeSend: function (xhr) {
+                                xhr.setRequestHeader(authorization, localStorage.getItem('token'));
+                            }
+                            ,success: function (data) {
+                                if (data.status === 200) {
+                                    layer.close(index);
+                                    bookTableReload();
+                                }
+                                layer.msg(data.message);
+                            }
+                        });
+                    }
+                });
+
+                uploadFile();
+
+                $('#btn-save').on('click', function () {
+
+                    $.ajax({
+                        url: path + 'book'
+                        ,type: 'put'
+                        ,dataType: 'json'
+                        ,data: $('#book-form').serializeArray()
+                        ,beforeSend: function (xhr) {
+                            xhr.setRequestHeader(authorization, localStorage.getItem('token'));
+                        }
+                        ,success: function (data) {
+                            if (data.status === 200) {
+                                bookTableReload();
+                                layer.close(index);
+                            }
+                            layer.msg(data.message);
+                        }
+                    });
+
+                });
+
+            });
+
+            $('#btn-reload').on('click', function () {
+                bookTableReload();
+            });
+
+            function uploadFile() {
+
+                var uploadIns = upload.render({
+                    elem: '#upload-image'
+                    ,url: path + image
+                    ,method: 'post'
+                    ,accept: 'images'
+                    ,size: 2*1000
+                    ,before: function (obj) {
+                        console.log(obj);
+                        obj.preview(function (index, file, result) {
+                            $('#image').attr('src', result);
+                            console.log('index:' + index);
+                            console.log('file:' + file);
+                            console.log('result:' + result);
+                        })
+                    }
+                    ,done: function (res, index, upload) {
+                        console.log(res);
+                        console.log(index);
+                        console.log(upload);
+                    }
+                    ,error: function (e) {
+                        console.log(e);
+                    }
+                });
+
+                return uploadIns;
+            }
+
+
+            function bookTableReload() {
+
+                $.ajax({
+                    type: 'get'
+                    ,url: path + books
+                    ,dataType: 'json'
+                    ,beforeSend: function (xhr) {
+                        xhr.setRequestHeader(authorization, localStorage.getItem('token'));
+                    }
+                    ,success: function (data) {
+                        tableIns.reload({
+                            data: data.data.data
+                        });
+                        layer.msg(data.message);
+                    }
+
+                });
+            }
+
+        });
+
+    });
+
+</script>
+</body>
+</html>

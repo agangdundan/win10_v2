@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>添加用户</title>
+    <link rel="stylesheet" href="../layui/css/layui.css">
+</head>
+<body>
+<form id="action-form" class="layui-form layui-form-pane" action="" style="width: 90%; margin: 0 auto; margin-top: 20px;">
+    <div class="layui-form-item">
+        <label class="layui-form-label">权限名</label>
+        <div class="layui-input-block">
+            <input name="description" id="description" lay-verify="required" autocomplete="off" class="layui-input" type="text">
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">url</label>
+        <div class="layui-input-block">
+            <input name="url" id="url" lay-verify="required" autocomplete="off" class="layui-input" type="text">
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">联动选择框</label>
+        <div class="layui-input-block">
+            <select name="quiz1">
+                <option value="">请选择省</option>
+                <option value="浙江" selected="">浙江省</option>
+                <option value="你的工号">江西省</option>
+                <option value="你最喜欢的老师">福建省</option>
+            </select>
+        </div>
+    </div>
+</form>
+<script src="../layui/layui.js"></script>
+<script src="../js/jquery-3.2.1.js"></script>
+<script type="text/javascript">
+
+    layui.use(['form', 'layer'], function () {
+
+        var form = layui.form,
+            layer = layui.layer;
+
+        $(document).ready(function () {
+
+            $('#btn-save').on('click', function () {
+                console.log($('#user-form2').serialize());
+                $.ajax({
+                    type: 'put',
+                    url: path + 'user',
+                    data: $('#user-form2').serialize(),
+                    dataType: 'json',
+                    //解决session跨域丢失问题
+                    /*xhrFields:{
+                        withCredentials: true
+                    },*/
+                    success: function (data) {
+                        alert(data);
+                    }
+                });
+
+            });
+
+        });
+
+    });
+
+</script>
+</body>
+</html>

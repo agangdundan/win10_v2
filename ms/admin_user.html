@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link href="./css/base.css" rel="stylesheet">
+    <link href="./layui/css/layui.css" rel="stylesheet">
+    <title>用户管理</title>
+</head>
+<body style="padding: 10px; margin: 0 auto;">
+
+<div class="layui-btn-group demoTable">
+    <button class="layui-btn" id="btn-add" data-type="getCheckLength">添加用户</button>
+    <button class="layui-btn" data-type="getCheckData">批量删除用户</button>
+    <button class="layui-btn" data-type="getCheckLength">批量导入用户</button>
+    <button class="layui-btn" id="btn-reload">
+        <i class="layui-icon">&#x1002;</i>
+    </button>
+</div>
+<div class="demoTable layui-inline layui-layout-right" style="margin-top: 10px; margin-right: 10px;">
+    搜索ID：
+    <div class="layui-inline">
+        <input class="layui-input" name="username" id="demoReload" autocomplete="off">
+    </div>
+    <button class="layui-btn" data-type="reload">搜索</button>
+</div>
+
+<table class="layui-hide" id="admin-user" lay-filter="admin-user"></table>
+
+<script type="text/html" id="admin-user-bar">
+    <a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a>
+    <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+</script>
+
+
+<script src="./layui/layui.js"></script>
+<script src="./js/jquery-3.2.1.js"></script>
+<script src="./js/base.js"></script>
+<script src="../js/win10.child.js"></script>
+<script type="text/javascript">
+
+    var content = '<form id="user-form" class="layui-form layui-form-pane" action="" style="width: 90%; margin: 0 auto; margin-top: 20px;">\n' +
+        '    <input type="hidden" name="id" id="id">\n' +
+        '    <div class="layui-container" style="width: 100px; margin-bottom: 20px; margin-top: 20px;">\n' +
+        '        <img name="header" id="header" src="./images/header.jpg" style="height: 100px; width: 100px;" class="layui-img layui-circle">\n' +
+        '    </div>\n' +
+        '    <div class="layui-form-item">\n' +
+        '        <label class="layui-form-label">用户名</label>\n' +
+        '        <div class="layui-input-block">\n' +
+        '            <input name="username" id="username" lay-verify="required" disabled autocomplete="off" class="layui-input" type="text">\n' +
+        '        </div>\n' +
+        '    </div>\n' +
+        '    <div class="layui-form-item">\n' +
+        '        <label class="layui-form-label">签名</label>\n' +
+        '        <div class="layui-input-block">\n' +
+        '            <input name="signature" id="signature" lay-verify="required" autocomplete="off" class="layui-input" type="text">\n' +
+        '        </div>\n' +
+        '    </div>\n' +
+        '    <div class="layui-form-item">\n' +
+        '        <label class="layui-form-label">性别</label>\n' +
+        '        <div class="layui-input-block">\n' +
+        '            <input name="sex" value="0" title="男" type="radio">\n' +
+        '            <input name="sex" value="1" title="女" type="radio">\n' +
+        '            <input name="sex" value="2" title="保密"  type="radio">\n' +
+        '        </div>\n' +
+        '    </div>\n' +
+        '    <div class="layui-form-item">\n' +
+        '        <label class="layui-form-label">邮箱</label>\n' +
+        '        <div class="layui-input-block">\n' +
+        '            <input name="email" id="email" lay-verify="required" autocomplete="off" class="layui-input" type="text">\n' +
+        '        </div>\n' +
+        '    </div>\n' +
+        '    <div class="layui-form-item">\n' +
+        '        <label class="layui-form-label">电话</label>\n' +
+        '        <div class="layui-input-block">\n' +
+        '            <input name="phone" id="phone" lay-verify="required" autocomplete="off" class="layui-input" type="text">\n' +
+        '        </div>\n' +
+        '    </div>\n' +
+        '    <div class="layui-form-item">\n' +
+        '        <label class="layui-form-label">上次登录时间</label>\n' +
+        '        <div class="layui-input-block">\n' +
+        '            <input name="lastTime" id="lastTime" lay-verify="required" disabled autocomplete="off" class="layui-input" type="text">\n' +
+        '        </div>\n' +
+        '    </div>\n' +
+        '    <div class="layui-form-item">\n' +
+        '        <label class="layui-form-label">注册时间</label>\n' +
+        '        <div class="layui-input-block">\n' +
+        '            <input name="createTime" id="createTime" lay-verify="required" disabled autocomplete="off" class="layui-input" type="text">\n' +
+        '        </div>\n' +
+        '    </div>\n' +
+        '    <div class="layui-form-item">\n' +
+        '        <label class="layui-form-label">管理员</label>\n' +
+        '        <div class="layui-input-block">\n' +
+        '            <input name="creatorName" id="creatorName" lay-verify="required" disabled autocomplete="off" class="layui-input" type="text">\n' +
+        '        </div>\n' +
+        '    </div>\n' +
+        '    <div class="layui-form-item">\n' +
+        '        <div class="layui-input-block" style="text-align: center; margin: 0 auto;">\n' +
+        '            <a class="layui-btn" href="javascript:void(0);" id="btn-save">保存</a>\n' +
+        '            <input type="reset" class="layui-btn layui-btn-primary" value="重置">\n' +
+        '        </div>\n' +
+        '    </div>\n' +
+        '</form>';
+
+    var content2 =
+        '<form id="user-form2" class="layui-form layui-form-pane" action="" style="width: 90%; margin: 0 auto; margin-top: 20px; text-align: center;">\n' +
+        '    <div class="layui-container" style="width: 100px; margin-bottom: 20px; margin-top: 20px;">\n' +
+        '        <img id="header" src="./images/header.jpg" style="height: 100px; width: 100px;" class="layui-img layui-circle">\n' +
+        '    </div>\n' +
+        '    <div class="layui-form-item">\n' +
+        '        <label class="layui-form-label">用户名</label>\n' +
+        '        <div class="layui-input-block">\n' +
+        '            <input name="username" id="username" lay-verify="required" autocomplete="off" class="layui-input" type="text">\n' +
+        '        </div>\n' +
+        '    </div>\n' +
+        '    <div class="layui-form-item">\n' +
+        '        <label class="layui-form-label">签名</label>\n' +
+        '        <div class="layui-input-block">\n' +
+        '            <input name="signature" id="signature" lay-verify="required" autocomplete="off" class="layui-input" type="text">\n' +
+        '        </div>\n' +
+        '    </div>\n' +
+        '    <div class="layui-form-item">\n' +
+        '        <label class="layui-form-label">性别</label>\n' +
+        '        <div class="layui-input-block">\n' +
+        '            <input name="sex" value="0" title="男" type="radio">\n' +
+        '            <input name="sex" value="1" title="女" type="radio">\n' +
+        '            <input name="sex" value="2" title="保密"  type="radio">\n' +
+        '        </div>\n' +
+        '    </div>\n' +
+        '    <div class="layui-form-item">\n' +
+        '        <label class="layui-form-label">邮箱</label>\n' +
+        '        <div class="layui-input-block">\n' +
+        '            <input name="email" id="email" lay-verify="required" autocomplete="off" class="layui-input" type="text">\n' +
+        '        </div>\n' +
+        '    </div>\n' +
+        '    <div class="layui-form-item">\n' +
+        '        <label class="layui-form-label">电话</label>\n' +
+        '        <div class="layui-input-block">\n' +
+        '            <input name="phone" id="phone" lay-verify="required" autocomplete="off" class="layui-input" type="text">\n' +
+        '        </div>\n' +
+        '    </div>\n' +
+        '    <div class="layui-form-item">\n' +
+        '        <div class="layui-input-block" style="text-align: center; margin: 0 auto;">\n' +
+        '            <a class="layui-btn" href="javascript:void(0);" id="btn-save">保存</a>\n' +
+        '            <input type="reset" class="layui-btn layui-btn-primary" value="重置">\n' +
+        '        </div>\n' +
+        '    </div>\n' +
+        '</form>';
+
+    function edit(obj){
+
+        var data = obj.data;
+
+        var index = layer.open({
+            type: 1,
+            title: '修改信息',
+            shadeClose: true,
+            shade: 0.8,
+            area: ['420px', '60%'],
+            content: content
+        });
+
+        $('#id').val(data.id);
+        $('#token').val(localStorage.getItem('token'));
+        $('#username').val(data.username);
+        $('#signature').val(data.signature);
+        $("[name='sex']").each(function (index, element) {
+            if ($(this).val() == data.sex) {
+                $(this).attr('checked', true);
+            }
+        });
+        $('#email').val(data.email);
+        $('#phone').val(data.phone);
+        $('#lastTime').val(data.lastTime);
+        $('#createTime').val(data.createTime);
+        $('#creatorName').val(data.creatorName);
+
+        $("#password").val(data.password);
+        $("#salt").val(data.salt);
+        $("#creatorId").val(data.creatorId);
+
+
+        $('#btn-save').on('click', function () {
+
+            $("#username").attr('disabled', false);
+            $("#lastTime").attr('disabled', false);
+            $("#createTime").attr('disabled', false);
+            $("#creatorName").attr('disabled', false);
+
+            $.ajax({
+                url: path + 'user'
+                ,type: 'post'
+                ,data: $('#user-form').serialize()
+                ,dataType: 'json'
+                ,beforeSend: function (xhr) {
+                    xhr.setRequestHeader(authorization, window.token);
+                }
+                ,success: function (data) {
+
+                    if (data.status === 200) {
+                        layer.msg(data.message);
+                        obj.update({
+                            signature: $('#signature').val(),
+                            sex: $("[name='sex'][checked='true']").val(),
+                            email: $('#email').val(),
+                            phone: $('#phone').val()
+                        });
+                        layer.close(index);
+                    } else {
+                        layer.alert(data.message, {
+                            icon: 0,
+                            skin: 'layui-layer-molv',
+                            btn: ['知道了']
+                        });
+                    }
+
+                },
+                error: function (e) {
+                    console.log(e);
+                }
+            });
+
+            $("#username").attr('disabled', true);
+            $("#lastTime").attr('disabled', true);
+            $("#createTime").attr('disabled', true);
+            $("#creatorName").attr('disabled', true);
+        });
+    }
+
+    function del(obj) {
+        layer.confirm('确定要删除这个用户？', {
+            icon: 3,
+            skin: 'layui-layer-molv',
+            btn: ['删除','取消'] //按钮
+        }, function(){
+            //删除操作
+            $.ajax(path + 'user/' + obj.data.id,{
+                type: 'delete',
+                dataType: 'json',
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader('Authorization', getToken())
+                },
+                success: function (data) {
+                    if (data.status === 200) {
+                        layer.msg(data.message);
+                        obj.del();
+                    } else {
+                        layer.alert(data.message, {
+                            icon: 0,
+                            skin: 'layui-layer-molv',
+                            btn: ['知道了']
+                        });
+                    }
+                }
+            });
+
+        });
+    }
+
+    layui.use(['layer', 'table', 'element', 'form'], function () {
+
+        var layer = layui.layer,
+            table = layui.table,
+            element = layui.element,
+            form = layui.form;
+
+        var tableIns;
+
+        /**
+         * 页面初始化，加载表格数据
+         */
+        $(document).ready(function () {
+
+            $.ajax({
+
+                url: path + window.users,
+                type: 'GET',
+                dataType: 'json',
+                data: {token: localStorage.getItem('token')},
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader('Authorization', localStorage.getItem('token'));
+                },
+                success: function (data) {
+                    console.log(data);
+
+                    if (data.status === 500) {
+
+                        layer.alert(data.message, {
+                            skin: 'layui-layer-molv',
+                            closeBtn: 0
+                        }, function () {
+                            Win10_child.openUrl('./ms/login.html',
+                                '<img class=\'icon\' src=\'./img/icon/win10.png\'/>登录');
+                            Win10_child.close();
+                        });
+
+                    } else {
+
+                        tableIns = table.render({
+                            elem: '#admin-user',
+                            data: data.data.data,
+                            page: true,
+                            cellMinWidth: 80,
+                            cols: [[
+                                {type: 'checkbox'},
+                                {field: 'id', title: 'ID', width: 80, sort: true},
+                                {field: 'username', title: '用户名', width: 80},
+                                {field: 'sex', title: '性别', width: 80},
+                                {field: 'email', title: '邮箱'},
+                                {field: 'phone', title: '电话'},
+                                {field: 'lastTime', title: '上次登录时间'},
+                                {field: 'createTime', title: '注册时间'},
+                                {field: 'creatorName', title: '管理员', width: 80},
+                                {fixed: 'right', width: 165, align:'center', toolbar: '#admin-user-bar'}
+                            ]],
+                            done: function (res, curr, count) {
+                                layer.msg(data.message);
+                            }
+                        });
+
+                    }
+                }
+
+            });
+
+            //监听复选框事件
+            table.on('checkbox(admin-user)', function (obj) {
+                console.log(obj);
+            });
+
+            //监听右部工具栏事件
+            table.on('tool(admin-user)', function (obj) {
+
+                var data = obj.data;
+                var layEvent = obj.event;
+                console.log(data);
+                if (layEvent === 'edit') {
+
+                    var data = obj.data;
+
+                    var index = layer.open({
+                        type: 1,
+                        title: '修改信息',
+                        shadeClose: true,
+                        shade: 0.8,
+                        area: ['420px', '60%'],
+                        content: content
+                    });
+
+                    $('#id').val(data.id);
+                    $('#token').val(localStorage.getItem('token'));
+                    $('#username').val(data.username);
+                    $('#signature').val(data.signature);
+                    $("[name='sex']").each(function (index, element) {
+                        if ($(this).val() == data.sex) {
+                            $(this).attr('checked', true);
+                        }
+                    });
+                    $('#email').val(data.email);
+                    $('#phone').val(data.phone);
+                    $('#lastTime').val(data.lastTime);
+                    $('#createTime').val(data.createTime);
+                    $('#creatorName').val(data.creatorName);
+
+                    $("#password").val(data.password);
+                    $("#salt").val(data.salt);
+                    $("#creatorId").val(data.creatorId);
+
+                    $('#btn-save').on('click', function () {
+
+                        $("#username").attr('disabled', false);
+                        $("#lastTime").attr('disabled', false);
+                        $("#createTime").attr('disabled', false);
+                        $("#creatorNames").attr('disabled', false);
+
+                        $.ajax({
+                            url: path + 'user'
+                            ,type: 'post'
+                            ,data: $('#user-form').serialize()
+                            ,dataType: 'json'
+                            ,beforeSend: function (xhr) {
+                                xhr.setRequestHeader('Authorization', localStorage.getItem('token'));
+                            }
+                            ,success: function (data) {
+
+                                if (data.status === 200) {
+                                    layer.msg(data.message);
+                                    obj.update({
+                                        signature: $('#signature').val(),
+                                        sex: $("[name='sex'][checked='true']").val(),
+                                        email: $('#email').val(),
+                                        phone: $('#phone').val()
+                                    });
+                                    layer.close(index);
+                                } else {
+                                    layer.alert(data.message, {
+                                        icon: 0,
+                                        skin: 'layui-layer-molv',
+                                        btn: ['知道了']
+                                    });
+                                }
+
+                            },
+                            error: function (e) {
+                                console.log(e);
+                            }
+                        });
+
+                        $("#username").attr('disabled', true);
+                        $("#lastTime").attr('disabled', true);
+                        $("#createTime").attr('disabled', true);
+                        $("#creatorNames").attr('disabled', true);
+                    });
+
+                    //edit(obj);
+
+                } else if (layEvent === 'del') {
+
+                    del(obj);
+                }
+
+                form.render();
+
+            });
+
+            //监听顶部工具条事件
+            var active = {
+                getCheckData: function(){ //获取选中数据
+                    var checkStatus = table.checkStatus('admin-user')
+                        ,data = checkStatus.data;
+                    layer.alert(JSON.stringify(data));
+                },
+                getCheckLength: function(){ //获取选中数目
+                    var checkStatus = table.checkStatus('admin-user')
+                        ,data = checkStatus.data;
+                    layer.msg('选中了：'+ data.length + ' 个');
+                },
+                isAll: function(){ //验证是否全选
+                    var checkStatus = table.checkStatus('admin-user');
+                    layer.msg(checkStatus.isAll ? '全选': '未全选')
+                }
+            };
+
+            $('.demoTable .layui-btn').on('click', function(){
+                var type = $(this).data('type');
+                active[type] ? active[type].call(this) : '';
+            });
+
+            $('#btn-add').on('click', function () {
+                var index = layer.open({
+                    type: 1,
+                    title: '添加用户',
+                    shadeClose: false,
+                    shade: 0.8,
+                    area: ['420px', '60%'],
+                    content: content2
+                });
+                form.render();
+                $('#btn-save').on('click', function () {
+                    console.log($('#user-form2').serialize());
+                    $.ajax({
+                        type: 'put',
+                        url: path + "user",
+                        data: $('#user-form2').serialize(),
+                        dataType: 'json',
+                        beforeSend: function (xhr) {
+                            xhr.setRequestHeader('Authorization', window.token);
+                        },
+                        success: function (data) {
+                            if (data.status === 200) {
+                                layer.msg(data.message);
+                                layer.close(index);
+                            } else {
+                                layer.alert(data.message, {
+                                    icon: 0,
+                                    btn: '知道了',
+                                    skin: 'layui-layer-molv'
+                                });
+                            }
+                        }
+                    });
+                });
+            });
+
+            $('#btn-reload').on('click', function () {
+
+                tableIns.reload();
+
+            });
+
+        });
+
+    });
+
+</script>
+</body>
+</html>

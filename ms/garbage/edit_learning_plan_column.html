@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>添加用户</title>
+    <link rel="stylesheet" href="../layui/css/layui.css">
+</head>
+<body>
+<form id="user-group-form" class="layui-form layui-form-pane" action="" style="width: 90%; margin: 0 auto; margin-top: 20px;">
+    <div class="layui-form-item">
+        <label class="layui-form-label">GroupName</label>
+        <div class="layui-input-block">
+            <input name="group-name" id="group-name" lay-verify="required" autocomplete="off" class="layui-input" type="text">
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">GroupInfo</label>
+        <div class="layui-input-block">
+            <input name="group-info" id="group-info" lay-verify="required" autocomplete="off" class="layui-input" type="text">
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">Sort</label>
+        <div class="layui-input-block">
+            <input name="sort" id="sort" lay-verify="required" autocomplete="off" class="layui-input" type="text">
+        </div>
+    </div>
+</form>
+<script src="../layui/layui.js"></script>
+<script src="../js/jquery-3.2.1.js"></script>
+<script type="text/javascript">
+
+    layui.use(['form', 'layer'], function () {
+
+        var form = layui.form,
+            layer = layui.layer;
+
+        $(document).ready(function () {
+
+            var column_id = localStorage.getItem("column_id");
+            var index = localStorage.getItem("layer_index");
+            console.log('index:' + index);
+            if (column_id !== null) {
+
+                $.get(path + 'learningplan/template/' + column_id, function (data) {
+                    if (data.status === 200) {
+                        $('#learningplancolumnName').val(data.data.data.learningplancolumnName);
+                        $('#learningplancolumnDesc').val(data.data.data.learningplancolumnDesc);
+                    } else {
+                        layer.msg(data.message);
+                    }
+                });
+
+            }
+
+            $('#btn-save').on('click', function () {
+
+                $.post(path + 'learningplan/template', function (data) {
+
+                    if (data.status == 200) {
+                        if (index !== null) {
+                            layer.close(index);
+                        }
+                    }
+                    layer.msg(data.message);
+                });
+
+            });
+
+        });
+
+    });
+
+</script>
+</body>
+</html>

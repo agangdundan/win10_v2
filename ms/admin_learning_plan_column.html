@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>layui</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link rel="stylesheet" href="./layui/css/layui.css"  media="all">
+    <!-- 注意：如果你直接复制所有代码到本地，上述css路径需要改成你本地的 -->
+</head>
+<body style="padding: 10px;">
+
+<div class="layui-btn-group demoTable">
+    <button class="layui-btn" id="btn-add">新增项目</button>
+    <button class="layui-btn" id="btn-reload">
+        <i class="layui-icon">&#x1002;</i>
+    </button>
+</div>
+
+<table class="layui-hide" id="learning-plan-template" lay-filter="learning-plan-template"></table>
+
+<script type="text/html" id="admin-template-bar">
+    <a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a>
+    <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+</script>
+
+<script src="./layui/layui.js" charset="utf-8"></script>
+<script src="./js/jquery-3.2.1.js" charset="utf-8"></script>
+<script src="./js/base.js"></script>
+<script src="../js/win10.child.js"></script>
+<script src="./js/base.js"></script>
+<!-- 注意：如果你直接复制所有代码到本地，上述js路径需要改成你本地的 -->
+
+<script>
+    layui.use(['layer', 'table'], function(){
+        var table = layui.table;
+        var layer = layui.layer;
+
+        $(document).ready(function () {
+
+            var add_content =
+                '<form id="template-form" class="layui-form layui-form-pane" action="" style="width: 90%; margin: 0 auto; margin-top: 20px;">\n' +
+                '    <input type="hidden" name="id" id="id">\n' +
+                '    <div class="layui-form-item">\n' +
+                '        <label class="layui-form-label">列名</label>\n' +
+                '        <div class="layui-input-block">\n' +
+                '            <input name="learningplancolumnName" id="learningplancolumnName" lay-verify="required" autocomplete="off" class="layui-input" type="text">\n' +
+                '        </div>\n' +
+                '    </div>\n' +
+                '    <div class="layui-form-item">\n' +
+                '        <label class="layui-form-label">描述</label>\n' +
+                '        <div class="layui-input-block">\n' +
+                '            <input name="learningplancolumnDesc" id="learningplancolumnDesc" lay-verify="required" autocomplete="off" class="layui-input" type="text">\n' +
+                '        </div>\n' +
+                '    </div>\n' +
+                '    <div class="layui-form-item">\n' +
+                '        <div class="layui-input-block" style="text-align: center; margin: 0 auto;">\n' +
+                '            <a class="layui-btn" href="javascript:void(0);" id="btn-save">保存</a>\n' +
+                '            <input type="reset" class="layui-btn layui-btn-primary" value="重置">\n' +
+                '        </div>\n' +
+                '    </div>\n' +
+                '</form>';
+
+            var tableIns;
+
+            $.ajax({
+                url: path + 'learningplan/template',
+                type: 'GET',
+                data: {token: localStorage.getItem('token')},
+                dataType: 'json',
+                success: function (data) {
+
+                    if (data.status === 500) {
+
+                        layer.alert(data.message, {
+                            skin: 'layui-layer-molv',
+                            closeBtn: 0
+                        }, function () {
+                            Win10_child.openUrl('./ms/login.html',
+                                '<img class=\'icon\' src=\'./img/icon/win10.png\'/>登录');
+                            Win10_child.close();
+                        });
+
+                    } else {
+                        tableIns = table.render({
+                            elem: '#learning-plan-template'
+                            ,data: data.data.data
+                            ,cellMinWidth: 80 //全局定义常规单元格的最小宽度，layui 2.2.1 新增
+                            ,page: true
+                            ,cols: [[
+                                {field:'id', width:80, title: 'ID', sort: true}
+                                ,{field:'learningplancolumnName', width: 200, title: '列名', sort: true}
+                                ,{field:'learningplancolumnDesc', minWidth:400, title: '描述', sort: true}
+                                ,{fixed: 'right', width: 165, align:'center', toolbar: '#admin-template-bar'}
+                            ]],
+                            done: function (res, curr, count) {
+                                layer.msg(data.message)
+                            }
+                        });
+                    }
+
+                }
+            });
+
+            $('#btn-reload').on('click', function () {
+
+                $.ajax({
+                    url: path + 'learningplan/template',
+                    type: 'GET',
+                    dataType: 'json',
+                    beforeSend: function (xhr) {
+                        xhr.setRequestHeader('Authorization', localStorage.getItem('token'));
+                    },
+                    success: function (data) {
+                        if (data.status === 200) {
+                            tableIns.reload({
+                                data: data.data.data
+                            });
+                        } else {
+                            layer.msg(data.message);
+                        }
+
+
+                    }
+
+                });
+
+
+            });
+
+
+            table.on('tool(learning-plan-template)', function (obj) {
+
+                var data = obj.data;
+                var layEvent = obj.event;
+                var index;
+                if (layEvent === 'edit') {
+
+                    index = layer.open({
+                        type: 1,
+                        title: '修改列',
+                        shadeClose: true,
+                        shade: 0.8,
+                        area: ['380px', '250px'],
+                        content: add_content
+                    });
+                    console.log(data);
+                    $('#id').val(data.id);
+                    $('#learningplancolumnName').val(data.learningplancolumnName);
+                    $('#learningplancolumnDesc').val(data.learningplancolumnDesc);
+
+
+                    $('#btn-save').on('click', function () {
+                        var dataStr = $('#template-form').serialize();
+                        console.log(dataStr);
+                        $.ajax({
+                            url: path + 'learningplan/template',
+                            type: 'post',
+                            data: dataStr,
+                            dataType: 'json',
+                            beforeSend: function (xhr) {
+                                xhr.setRequestHeader('Authorization', localStorage.getItem('token'));
+                            },
+                            success: function (data) {
+                                if (data.status === 200) {
+
+                                    obj.update({
+                                        learningplancolumnName: $('#learningplancolumnName').val(),
+                                        learningplancolumnDesc: $('#learningplancolumnDesc').val()
+                                    });
+                                    layer.close(index);
+                                }
+                                layer.msg(data.message);
+                            }
+                        });
+
+                    });
+
+                } else if (layEvent === 'del') {
+
+                    layer.confirm('真的删除行么', function(index){
+                        //向服务端发送删除指令
+                        $.ajax({
+                            type: 'delete',
+                            url: path + 'learningplan/template/' + data.id,
+                            dataType: 'json',
+                            beforeSend: function (xhr) {
+                                xhr.setRequestHeader('Authorization', localStorage.getItem('token'));
+                            },
+                            success: function (data) {
+                                if (data.status === 200) {
+                                    layer.close(index);
+                                    obj.del(); //删除对应行（tr）的DOM结构，并更新缓存
+                                }
+                                layer.msg(data.message);
+                            }
+                        });
+                    });
+                }
+
+            });
+
+            $('#btn-add').on('click', function () {
+
+                var index = layer.open({
+                    type: 1,
+                    title: '添加列',
+                    shadeClose: true,
+                    shade: 0.8,
+                    area: ['380px', '30%'],
+                    content: add_content
+                });
+
+                $('#btn-save').on('click', function () {
+                    console.log($('#template-form').serialize());
+                    $.ajax({
+                        type: 'put',
+                        url: path + 'learningplan/template',
+                        data: $('#template-form').serialize(),
+                        dataType: 'json',
+                        beforeSend: function (xhr) {
+                            xhr.setRequestHeader('Authorization', localStorage.getItem('token'));
+                        },
+                        success: function (data) {
+                            if (data.status === 200) {
+                                $.ajax({
+                                    url: path + 'learningplan/template',
+                                    type: 'GET',
+                                    dataType: 'json',
+                                    beforeSend: function (xhr) {
+                                        xhr.setRequestHeader('Authorization', localStorage.getItem('token'));
+                                    },
+                                    success: function (data) {
+                                        if (data.status === 200) {
+                                            tableIns.reload({
+                                                data: data.data.data
+                                            });
+                                        }
+                                    }
+                                });
+                                layer.close(index);
+                            }
+                            layer.msg(data.message);
+                        }
+                    });
+
+                });
+
+            });
+
+        })
+    });
+</script>
+
+</body>
+</html>
