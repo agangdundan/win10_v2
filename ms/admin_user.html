@@ -467,9 +467,14 @@
                             xhr.setRequestHeader('Authorization', window.token);
                         },
                         success: function (data) {
+                            console.log(data);
                             if (data.status === 200) {
                                 layer.msg(data.message);
                                 layer.close(index);
+                                reloadTableIns({
+                                    tabIns: tableIns
+                                    ,action: window.users
+                                });
                             } else {
                                 layer.alert(data.message, {
                                     icon: 0,
@@ -484,7 +489,10 @@
 
             $('#btn-reload').on('click', function () {
 
-                tableIns.reload();
+                reloadTableIns({
+                    tabIns: tableIns
+                    ,action: window.users
+                });
 
             });
 

@@ -20,15 +20,15 @@
 <div class="layui-tab layui-tab-card">
     <ul class="layui-tab-title">
         <li class="layui-this" id="tab-user">用户</li>
-        <li id="tab-user-group">用户组</li>
-        <li id="tab-action">权限资源</li>
-        <li>权限分配</li>
+        <li id="tab-role">用户组</li>
+        <li id="tab-resource">权限资源</li>
+        <li id="tab-permission">Permission</li>
     </ul>
     <div class="layui-tab-content" style="height: auto;">
         <div class="layui-tab-item layui-show"><table id="user-form" lay-filter="user-form"></table></div>
-        <div class="layui-tab-item"><table id="user-group-form" lay-filter="user-group-form"></table></div>
-        <div class="layui-tab-item"><table id="action-form" lay-filter="action-form"></table></div>
-        <div class="layui-tab-item"><table id="action-admin"></table></div>
+        <div class="layui-tab-item"><table id="role-form" lay-filter="role-form"></table></div>
+        <div class="layui-tab-item"><table id="resource-form" lay-filter="resource-form"></table></div>
+        <div class="layui-tab-item"><table id="permission-form" lay-filter="permission-form"></table></div>
     </div>
     <script type="text/html" id="admin-bar">
         <a class="layui-btn layui-btn-normal layui-btn-xs" lay-event="group">用户组</a>
@@ -41,6 +41,10 @@
         <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
     </script>
     <script type="text/html" id="admin-action-bar">
+        <a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a>
+        <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+    </script>
+    <script type="text/html" id="admin-role-bar">
         <a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a>
         <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
     </script>
@@ -57,7 +61,7 @@
         var table = layui.table;
         var form = layui.form;
 
-        var tableOfUser, tableOfUserGroup, tableOfAction;
+        var tableOfUser, tableOfPermission, tableOfResource, tableOfRole;
 
         var content = '<form id="user-form2" class="layui-form layui-form-pane" style="width: 90%; margin: 0 auto; margin-top: 20px;">\n' +
             '    <input type="hidden" id="id" name="id">\n' +
@@ -99,7 +103,7 @@
             '</form>';
 
         var content_of_user_group =
-            '<form id="user-group-form2" class="layui-form layui-form-pane" style="width: 90%; margin: 0 auto; margin-top: 20px;">\n' +
+            '<form id="permission-form2" class="layui-form layui-form-pane" style="width: 90%; margin: 0 auto; margin-top: 20px;">\n' +
             '    <input type="hidden" id="id" name="id">\n' +
             '    <div class="layui-form-item">\n' +
             '        <label class="layui-form-label">用户组名称</label>\n' +
@@ -122,7 +126,7 @@
             '</form>';
 
         var content_of_action =
-            '<form id="action-form" class="layui-form layui-form-pane" style="width: 90%; margin: 0 auto; margin-top: 20px;">\n' +
+            '<form id="resource-form" class="layui-form layui-form-pane" style="width: 90%; margin: 0 auto; margin-top: 20px;">\n' +
             '    <input type="hidden" name="id" id="id">\n' +
             '    <div class="layui-form-item">\n' +
             '        <label class="layui-form-label">权限名</label>\n' +
@@ -195,24 +199,25 @@
             });
 
             /**
-             * load the second table of userGroups
+             * load the second table of roles
              */
             doAjax({
-                action: window.usergroups
+                action: window.permissions
                 ,type: 'get'
                 ,async: false
                 ,success: function (data) {
                     if (data.status === 200) {
-                        tableOfUserGroup = renderTable({
-                            id: '#user-group-form'
+                        tableOfPermission = renderTable({
+                            id: '#permission-form'
                             , data: data.data.data
                             , cols: [[
                                 {field: 'id', title: 'ID', width: 80, sort: true},
-                                {field: 'groupName', title: '用户组', width: 80},
-                                {field: 'groupInfo', title: '组描述'},
-                                {field: 'createrName', title: '创建者', width: 120},
-                                {field: 'createTime', title: '创建时间', minWidth: 120},
-                                {field: 'sort', title: '排序', width: 120, sort: true},
+                                {field: 'source', title: '资源'},
+                                {field: 'action', title: '操作', width: 120},
+                                {field: 'relation', title: '权限类型', minWidth: 120},
+                                {field: 'ownerId', title: 'Owner', minWidth: 120},
+                                {field: 'roleIds', title: 'RoleIds', width: 120, sort: true},
+                                {field: 'createTime', title: 'Time', width: 120, sort: true},
                                 {fixed: 'right', width: 165, align: 'center', toolbar: '#admin-group-bar'}
                             ]],
                             done: function () {
@@ -226,29 +231,56 @@
             });
 
             /**
-             * load the third table of actions
+             * load the third table of permissions
              */
             doAjax({
-                action: window.actions
+                action: window.resources
                 ,type: 'get'
                 ,async: false
                 ,success: function (data) {
                     if (data.status === 200) {
-                        tableOfAction = renderTable({
-                            id: '#action-form'
+                        tableOfResource = renderTable({
+                            id: '#resource-form'
                             , data: data.data.data
                             , cols: [[
                                 {field: 'id', title: 'ID', width: 80, sort: true},
-                                {field: 'action', title: 'action'},
-                                {field: 'type', title: '方法', width: 120},
-                                {field: 'description', title: '描述', minWidth: 120},
-                                {field: 'visiable', title: '状态', width: 120},
+                                {field: 'name', title: 'Name'},
+                                {field: 'identity', title: 'Identity', width: 120},
+                                {field: 'permissions', title: 'Permissions', minWidth: 120},
+                                {field: 'createTime', title: 'Time', minWidth: 120},
                                 {fixed: 'right', width: 165, align: 'center', toolbar: '#admin-action-bar'}
                             ]]
                             , done: function () {
-                                layer.msg(data.message);
+
                             }
                         });
+                    } else {
+                        layer.msg(data.message);
+                    }
+                }
+            });
+
+            doAjax({
+                action: window.roles
+                ,type: 'get'
+                ,async: false
+                ,success: function(data) {
+                    tableOfRole = renderTable({
+                        id: '#role-form'
+                        ,data: data.data.data
+                        ,cols: [[
+                            {field: 'id', title: 'ID', width: 80, sort: true},
+                            {field: 'name', title: 'Name'},
+                            {field: 'userIds', title: 'userIds', width: 120},
+                            {field: 'permissionIds', title: 'PermissionIds', minWidth: 120},
+                            {field: 'createTime', title: 'Time', minWidth: 120},
+                            {fixed: 'right', width: 165, align: 'center', toolbar: '#admin-role-bar'}
+                        ]]
+                        ,
+
+                    });
+                    if (data.status === 200) {
+
                     } else {
                         layer.msg(data.message);
                     }
@@ -263,13 +295,18 @@
                 });
 
                 reloadTableIns({
-                    tabIns: tableOfUserGroup
-                    ,action: window.usergroups
+                    tabIns: tableOfRole
+                    ,action: window.roles
                 });
 
                 reloadTableIns({
-                    tabIns: tableOfAction
-                    ,action: window.actions
+                    tabIns: tableOfPermission
+                    ,action: window.permissions
+                });
+
+                reloadTableIns({
+                    tabIns: tableOfResource
+                    ,action: window.resources
                 });
 
             });
@@ -328,7 +365,7 @@
                 form.render();
             });
 
-            table.on('tool(user-group-form)', function (obj) {
+            table.on('tool(permission-form)', function (obj) {
                 var data = obj.data;
                 var layEvent = obj.event;
                 if (layEvent === 'edit') {
@@ -342,7 +379,7 @@
                             updateObject({
                                 action: window.usergroup
                                 ,obj: obj
-                                ,data: $('#user-group-form2').serializeArray()
+                                ,data: $('#permission-form2').serializeArray()
                                 ,update: {
                                     groupName: $('#group-name').val()
                                     ,groupInfo: $('#group-info').val()
@@ -384,7 +421,7 @@
                 }
             });
 
-            table.on('tool(action-form)', function (obj) {
+            table.on('tool(resource-form)', function (obj) {
                 var data = obj.data;
                 var layEvent = obj.event;
                 if (layEvent === 'edit') {
@@ -443,7 +480,7 @@
 
             });
 
-            $('#tab-action').on('click', function () {
+            $('#tab-permission').on('click', function () {
                 $('#btn-add').html('添加权限');
                 $('#btn-add').unbind('click');
                 $('#btn-add').on('click', function () {
@@ -468,8 +505,8 @@
                                 ,success: function (data) {
                                     if (data.status === 200) {
                                         reloadTableIns({
-                                            tabIns: tableOfAction
-                                            ,action: window.actions
+                                            tabIns: tableOfPermission
+                                            ,action: window.permissions
                                         });
                                         layer.close(index);
                                     }
@@ -488,7 +525,7 @@
                 $('#btn-add').unbind('click');
             });
 
-            $('#tab-user-group').on('click', function () {
+            $('#tab-role').on('click', function () {
                 $('#btn-add').html('添加用户组');
                 $('#btn-add').unbind('click');
                 $('#btn-add').on('click', function () {
@@ -502,14 +539,14 @@
                         btn: ['保存', '取消'],
                         yes: function () {
                             doAjax({
-                                action: window.usergroup
-                                ,data: $('#user-group-form').serialize()
+                                action: window.role
+                                ,data: $('#permission-form').serialize()
                                 ,type: 'put'
                                 ,success: function (data) {
                                     if (data.status === 200) {
                                         reloadTableIns({
-                                            tabIns: tableOfUserGroup
-                                            ,action: window.usergroups
+                                            tabIns: tableOfRole
+                                            ,action: window.roles
                                         });
                                         layer.close(index);
                                     }

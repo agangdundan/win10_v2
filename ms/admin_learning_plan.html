@@ -6,13 +6,12 @@
     <meta name="renderer" content="webkit">
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-    <link rel="stylesheet" href="./layui/css/layui.css"  media="all">
-    <!-- 注意：如果你直接复制所有代码到本地，上述css路径需要改成你本地的 -->
+    <link rel="stylesheet" href="./layui/css/layui.css" media="all">
 </head>
 <body style="padding: 10px;">
 
 <div class="layui-btn-group demoTable">
-    <button class="layui-btn" id="btn-add">新增项目</button>
+    <button class="layui-btn" id="btn-add">查看模板</button>
     <button class="layui-btn" id="btn-reload">
         <i class="layui-icon">&#x1002;</i>
     </button>
@@ -31,10 +30,9 @@
 <script src="./js/jquery-3.2.1.js" charset="utf-8"></script>
 <script src="./js/base.js"></script>
 <script src="../js/win10.child.js"></script>
-<!-- 注意：如果你直接复制所有代码到本地，上述js路径需要改成你本地的 -->
 
 <script>
-    layui.use(['layer', 'table'], function(){
+    layui.use(['layer', 'table'], function () {
         var table = layui.table;
         var layer = layui.layer;
 
@@ -87,7 +85,7 @@
             var tableIns;
 
             $.ajax({
-                url: path + 'learningplans',
+                url: path + window.learning_plans,
                 type: 'GET',
                 data: {token: token},
                 dataType: 'json',
@@ -98,29 +96,22 @@
                     console.log(data);
                     if (data.status === 500) {
 
-                        layer.alert(data.message, {
-                            skin: 'layui-layer-molv',
-                            closeBtn: 0
-                        }, function () {
-                            Win10_child.openUrl('./ms/login.html',
-                                '<img class=\'icon\' src=\'./img/icon/win10.png\'/>登录');
-                            Win10_child.close();
-                        });
+                        layer.msg(data.message);
 
                     } else {
 
                         tableIns = table.render({
                             elem: '#learning-plan'
-                            ,data: data.data.data
-                            ,cellMinWidth: 80 //全局定义常规单元格的最小宽度，layui 2.2.1 新增
-                            ,page: true
-                            ,cols: [[
-                                {field:'id', width:80, title: 'ID', sort: true}
-                                ,{field:'username', width: 100, title: '填写人', sort: true}
-                                ,{field:'status', width:80, title: '状态', sort: true}
-                                ,{field:'isshare', width:80, title: '分享', sort: true}
-                                ,{field:'createTime', title: '填写时间', sort: true}
-                                ,{fixed: 'right', width: 165, align:'center', toolbar: '#admin-plan-bar'}
+                            , data: data.data.data
+                            , cellMinWidth: 80 //全局定义常规单元格的最小宽度，layui 2.2.1 新增
+                            , page: true
+                            , cols: [[
+                                {field: 'id', width: 80, title: 'ID', sort: true}
+                                , {field: 'ownerName', width: 100, title: '填写人', sort: true}
+                                , {field: 'status', width: 80, title: '状态', sort: true}
+                                , {field: 'isShare', width: 80, title: '分享', sort: true}
+                                , {field: 'createTime', title: '填写时间', sort: true}
+                                , {fixed: 'right', width: 165, align: 'center', toolbar: '#admin-plan-bar'}
                             ]],
                             done: function (res) {
                                 if (res.code === 500) {
@@ -142,7 +133,6 @@
             });
 
 
-
             table.on('tool(learning-plan)', function (obj) {
 
                 var data = obj.data;
@@ -150,6 +140,10 @@
                 var tr = obj.tr;
                 var index;
                 if (layEvent === 'detail') {
+
+                    var form = null;
+                    var cols = null;
+                    var user = null;
 
                     index = layer.open({
                         type: 1,
@@ -161,119 +155,151 @@
                         skin: 'layui-layer-molv'
                     });
 
-                    $.ajax({
-                        url: path + 'learningplan/' + data.id,
-                        type: 'GET',
-                        dataType: 'json',
-                        beforeSend: function (xhr) {
-                            xhr.setRequestHeader('Authorization', localStorage.getItem('token'));
-                        },
-                        success: function (data) {
-                            if (data.status === 500) {
+                    doAjax({
+                        action: window.column_manager
+                        ,data: {planFormId: data.id}
+                        ,async: false
+                        ,success: function(data) {
+                            if (data.status === 200) {
+                                cols = data.data.data;
+                            } else {
                                 layer.msg(data.message);
+                                return false;
                             }
-                            var user = data.data.user;
-                            var cols = data.data.data;
-                            var form = data.data.code;
-
-                            $('#username').val(user.username);
-                            var sex;
-                            if (user.sex === 0) {
-                                sex = "男";
-                            } else if (user.sex === 1) {
-                                sex = "女";
-                            } else if (user.sex === 2) {
-                                sex = "保密";
-                            }
-                            $('#sex').val(sex);
-                            $('#phone').val(user.phone);
-                            $('#createTime').val(form.createTime);
-
-                            $.each(cols, function (index, elem) {
-
-
-                                var column_content =
-                                    '       <div class="layui-form-item layui-form-text layui-bg-green">\n' +
-                                    '            <label class="layui-form-label layui-bg-green">' + elem.learningplancolumnName + '</label>\n' +
-                                    '            <div class="layui-input-block">\n' +
-                                    '                <textarea placeholder="请输入内容" class="layui-textarea">' + elem.learningplancolumnContent + '</textarea>\n' +
-                                    '            </div>\n' +
-                                    '        </div>';
-
-
-                                $('#learning-plan-form').append(column_content);
-
-                            });
-
-                            var btns_content =
-                                '    <div class="layui-form-item">\n' +
-                                '        <div class="layui-input-block" style="text-align: center; margin: 0 auto;">\n' +
-                                '            <a class="layui-btn" href="javascript:void(0);" id="btn-approve">批阅</a>\n' +
-                                '            <a class="layui-btn layui-btn-primary" id="btn-close">关闭</a>\n' +
-                                '        </div>\n' +
-                                '    </div>\n';
-
-                            var approve_content =
-                                '       <div class="layui-form-item layui-form-text layui-bg-orange">\n' +
-                                '            <label class="layui-form-label layui-bg-orange">审批内容</label>\n' +
-                                '            <div class="layui-input-block">\n' +
-                                '                <textarea placeholder="请输入内容" class="layui-textarea">' + form.approveContent + '</textarea>\n' +
-                                '            </div>\n' +
-                                '        </div>';
-
-
-                            if (form.approveContent.length !== 0) {
-                                console.log(form.approveContent);
-                                $('#learning-plan-form').append(approve_content);
-
-                            }
-
-
-                            $('#learning-plan-form').append(btns_content);
-
-                            $('#btn-approve').on('click', function () {
-
-                                layer.prompt({
-                                    title: '批阅规划表',
-                                    formType: 2
-                                }, function (text, index) {
-                                    //请求更新批语
-                                    $.post(path + 'learningplan/approve', {id: form.id, approveContent: text, token: token}, function (data) {
-                                        if (data.status === 200) {
-                                            obj.update({
-                                                status: 1
-                                            });
-                                            layer.closeAll();
-                                        }
-                                        layer.msg(data.message);
-                                    });
-                                });
-
-                                layer.msg("请输入500字以内的批语。");
-
-                            });
-
-                            $('#btn-close').on('click', function () {
-                                layer.close(index);
-                            });
                         }
+                    });
+
+                    doAjax({
+                        action: window.user + "/now"
+                        ,async: false
+                        ,success: function (data) {
+                            if(data.status === 200) {
+                                user = data.data.data;
+                            } else {
+                                layer.msg(data.message);
+                                return false;
+                            }
+                        }
+                    });
+
+                    doAjax({
+                        action: window.learning_plan + "/" + data.id
+                        ,async: false
+                        ,success: function(data) {
+                            if (data.status === 200) {
+                                form = data.data.data;
+                            } else {
+                                layer.msg(data.message);
+                                return false;
+                            }
+                        }
+                    });
+
+                    $('#username').val(user.username);
+                    var sex;
+                    if (user.sex === 0) {
+                        sex = "男";
+                    } else if (user.sex === 1) {
+                        sex = "女";
+                    } else if (user.sex === 2) {
+                        sex = "保密";
+                    }
+                    $('#sex').val(sex);
+                    $('#phone').val(user.phone);
+                    $('#createTime').val(form.createTime);
+
+                    $.each(cols, function (index, elem) {
+
+                        var column_content =
+                            '       <div class="layui-form-item layui-form-text layui-bg-green">\n' +
+                            '            <label class="layui-form-label layui-bg-green">' + elem.learningPlanColumnName + '</label>\n' +
+                            '            <div class="layui-input-block">\n' +
+                            '                <textarea placeholder="请输入内容" class="layui-textarea">' + elem.learningPlanColumnContent + '</textarea>\n' +
+                            '            </div>\n' +
+                            '        </div>';
+
+
+                        $('#learning-plan-form').append(column_content);
+
+                    });
+
+                    var btns_content =
+                        '    <div class="layui-form-item">\n' +
+                        '        <div class="layui-input-block" style="text-align: center; margin: 0 auto;">\n' +
+                        '            <a class="layui-btn" href="javascript:void(0);" id="btn-approve">批阅</a>\n' +
+                        '            <a class="layui-btn layui-btn-primary" id="btn-close">关闭</a>\n' +
+                        '        </div>\n' +
+                        '    </div>\n';
+
+                    var approve_content =
+                        '       <div class="layui-form-item layui-form-text layui-bg-orange">\n' +
+                        '            <label class="layui-form-label layui-bg-orange">审批内容</label>\n' +
+                        '            <div class="layui-input-block">\n' +
+                        '                <textarea placeholder="请输入内容" class="layui-textarea">' + form.approveContent + '</textarea>\n' +
+                        '            </div>\n' +
+                        '        </div>';
+
+
+                    if (form.approveContent.length !== 0) {
+                        console.log(form.approveContent);
+                        $('#learning-plan-form').append(approve_content);
+                    }
+
+                    $('#learning-plan-form').append(btns_content);
+
+                    $('#btn-approve').on('click', function () {
+
+                        layer.prompt({
+                            title: '批阅规划表',
+                            formType: 2
+                        }, function (text, index) {
+                            //请求更新批语
+                            if (text.length < 500) {
+                                $.post(path + window.learning_plan, {
+                                    id: form.id,
+                                    approveContent: text,
+                                    token: token
+                                }, function (data) {
+                                    if (data.status === 200) {
+                                        obj.update({
+                                            status: 1
+                                        });
+                                        layer.close(index);
+                                    }
+                                    layer.msg(data.message);
+                                });
+                            } else {
+                                layer.msg("请输入500字以内的批语。");
+                            }
+
+                        });
+
+                        layer.msg("请输入500字以内的批语。");
+
+                    });
+
+                    $('#btn-close').on('click', function () {
+                        layer.close(index);
                     });
 
                 } else if (layEvent === 'share') {
 
-                    layer.confirm('真的要分享吗？', function(index){
-                        obj.update({
-                            status: 1
-                        });
+                    layer.confirm('真的要分享吗？', function (index) {
+
                         //向服务端发送删除指令
                         $.ajax({
                             type: 'post',
-                            url: path + 'learningplan',
-                            data: {id: data.id, isshare: 1},
+                            url: path + window.learning_plan,
+                            data: {id: data.id, isShare: 1},
                             dataType: 'json',
                             success: function (data) {
-                                layer.close(index);
-                                layer.msg('分享成功！');
+                                if (data.status === 200) {
+                                    obj.update({
+                                        status: 1
+                                    });
+                                    layer.close(index);
+                                }
+                                layer.msg(data.message);
                             }
                         });
                     });
@@ -285,20 +311,53 @@
 
             $('#btn-add').on('click', function () {
 
+                var cols = null;
+
                 var index = layer.open({
                     type: 1,
-                    title: '添加列',
+                    title: '规划表模板',
+                    skin: 'layui-layer-molv',
                     shadeClose: true,
                     shade: 0.8,
                     area: ['620px', '600px'],
                     content: form_content
                 });
 
+                doAjax({
+                    action: window.learning_plan_columns
+                    ,async: false
+                    ,success: function(data) {
+                        if (data.status === 200) {
+                            cols = data.data.data;
+                        } else {
+                            layer.msg(data.message);
+                            return false;
+                        }
+                    }
+                });
+
+                $.each(cols, function (index, elem) {
+
+                    var column_content =
+                        '       <div class="layui-form-item layui-form-text layui-bg-green">\n' +
+                        '            <label class="layui-form-label layui-bg-green">' + elem.learningPlanColumnName + '</label>\n' +
+                        '            <div class="layui-input-block">\n' +
+                        '                <textarea placeholder="请输入内容" class="layui-textarea">' + '' + '</textarea>\n' +
+                        '            </div>\n' +
+                        '        </div>';
+
+
+                    $('#learning-plan-form').append(column_content);
+
+                });
+
+
+                /*
                 $('#btn-save').on('click', function () {
-                    console.log($('#template-form').serialize());
+
                     $.ajax({
                         type: 'put',
-                        url: path + 'learningplans',
+                        url: path + window.learning_plan,
                         data: $('#template-form').serialize(),
                         dataType: 'json',
                         beforeSend: function (xhr) {
@@ -307,7 +366,7 @@
                         success: function (data) {
                             if (data.status === 200) {
                                 table.reload('learning-plan', {
-                                    url: path + "learningplans"
+                                    url: path + window.learning_plan
                                 });
                                 layer.close(index);
                             }
@@ -316,12 +375,15 @@
                     });
 
                 });
+                */
 
             });
 
             $('#btn-reload').on('click', function () {
 
-                tableIns.reload();
+                doAjax({
+                    action: window.learning_plans
+                });
 
             });
 

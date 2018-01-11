@@ -18,23 +18,23 @@ window.logout = "logout";
 
 window.token = localStorage.getItem('token');
 
-window.learningplan = "learningplan";
-window.learningplans = "learningplans";
+window.learning_plan = "plan-form";
+window.learning_plans = "plan-forms";
 
-window.learningplancolumn = "learningplancolumn";
-window.learningplancolumns = "learningplancolumns";
+window.learning_plan_column = "form-column";
+window.learning_plan_columns = "form-columns";
 
-window.learningplancolumnmanager = "learningplancolumnmanager";
-window.learningplancolumnmanagers = "learningplancolumnmanagers";
+window.column_manager = "column-manager";
+window.column_managers = "column-managers";
 
-window.usergroup = "usergroup";
-window.usergroups = "usergroups";
+window.role = "role";
+window.roles = "roles";
 
-window.action = "action";
-window.actions = "actions";
+window.permission = "permission";
+window.permissions = "permissions";
 
-window.actiongroup = "actiongroup";
-window.actiongroups = "actiongroups";
+window.resource = "resource";
+window.resources = "resources";
 
 window.file = "file";
 window.image = "image";
@@ -93,12 +93,14 @@ function reloadTableIns(opts) {
     }
 
     var tabIns = opts['tabIns'];
-    console.log(typeof tabIns);
     doAjax({
         action: opts['action']
         ,type: 'get'
         ,data: opts['data']
         ,success: function (data) {
+            tabIns.reload({
+                data: data.data.data
+            });
             layer.msg(data.message);
         }
     })
@@ -234,14 +236,15 @@ function getToken () {
 }
 
 function onLearningPlanColumnClick(obj) {
-    console.log(localStorage.getItem('currFormId'));
+    console.log("obj");
+    console.log($(obj));
     var column_content =
         '       <form class="layui-form-item layui-form-text layui-bg-green">\n' +
         '            <label class="layui-form-label layui-bg-green">' + $(obj).text() + '</label>\n' +
-        '            <input type="hidden" name="learningplancolumnName" value="' + $(obj).text() + '">\n' +
-        '            <input type="hidden" name="learningplanformId" value="' + localStorage.getItem('currFormId') + '">\n' +
+        '            <input type="hidden" name="learningPlanColumnName" value="' + $(obj).text() + '">\n' +
+        '            <input type="hidden" name="learningPlanFormId" value="' + localStorage.getItem('currFormId') + '">\n' +
         '            <div class="layui-input-block">\n' +
-        '                <textarea placeholder="请输入内容" name="learningplancolumnContent" class="layui-textarea" onblur="saveLearningPlanColumnContent(this)"></textarea>\n' +
+        '                <textarea placeholder="请输入内容" name="learningPlanColumnContent" class="layui-textarea" onblur="saveLearningPlanColumnContent(this)"></textarea>\n' +
         '            </div>\n' +
         '        </form>';
 
@@ -263,7 +266,7 @@ function saveLearningPlanColumnContent(obj) {
     }
 
     $.ajax({
-        url: path + 'learningplancolumn/content',
+        url: path + window.column_manager,
         data: $(obj).parent().parent().serialize(),
         dataType: 'json',
         type: 'post',
@@ -288,7 +291,7 @@ function updateApproveContent(content) {
         return false;
     }
     $.ajax({
-        url: path + 'learningplan',
+        url: path + window.learning_plan,
         dataType: 'json',
         data: {approveContent: content},
         type: 'post',

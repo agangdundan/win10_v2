@@ -6,7 +6,7 @@
     <meta name="renderer" content="webkit">
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-    <link rel="stylesheet" href="./layui/css/layui.css"  media="all">
+    <link rel="stylesheet" href="./layui/css/layui.css" media="all">
     <!-- 注意：如果你直接复制所有代码到本地，上述css路径需要改成你本地的 -->
 </head>
 <body style="padding: 10px;">
@@ -33,7 +33,7 @@
 <!-- 注意：如果你直接复制所有代码到本地，上述js路径需要改成你本地的 -->
 
 <script>
-    layui.use(['layer', 'table'], function(){
+    layui.use(['layer', 'table'], function () {
         var table = layui.table;
         var layer = layui.layer;
 
@@ -45,13 +45,13 @@
                 '    <div class="layui-form-item">\n' +
                 '        <label class="layui-form-label">列名</label>\n' +
                 '        <div class="layui-input-block">\n' +
-                '            <input name="learningplancolumnName" id="learningplancolumnName" lay-verify="required" autocomplete="off" class="layui-input" type="text">\n' +
+                '            <input name="learningPlanColumnName" id="learningPlanColumnName" lay-verify="required" autocomplete="off" class="layui-input" type="text">\n' +
                 '        </div>\n' +
                 '    </div>\n' +
                 '    <div class="layui-form-item">\n' +
                 '        <label class="layui-form-label">描述</label>\n' +
                 '        <div class="layui-input-block">\n' +
-                '            <input name="learningplancolumnDesc" id="learningplancolumnDesc" lay-verify="required" autocomplete="off" class="layui-input" type="text">\n' +
+                '            <input name="learningPlanColumnDesc" id="learningPlanColumnDesc" lay-verify="required" autocomplete="off" class="layui-input" type="text">\n' +
                 '        </div>\n' +
                 '    </div>\n' +
                 '    <div class="layui-form-item">\n' +
@@ -65,48 +65,37 @@
             var tableIns;
 
             $.ajax({
-                url: path + 'learningplan/template',
+                url: path + window.learning_plan_columns,
                 type: 'GET',
                 data: {token: localStorage.getItem('token')},
                 dataType: 'json',
                 success: function (data) {
-
-                    if (data.status === 500) {
-
-                        layer.alert(data.message, {
-                            skin: 'layui-layer-molv',
-                            closeBtn: 0
-                        }, function () {
-                            Win10_child.openUrl('./ms/login.html',
-                                '<img class=\'icon\' src=\'./img/icon/win10.png\'/>登录');
-                            Win10_child.close();
-                        });
-
-                    } else {
+                    if (data.status === 200) {
                         tableIns = table.render({
                             elem: '#learning-plan-template'
-                            ,data: data.data.data
-                            ,cellMinWidth: 80 //全局定义常规单元格的最小宽度，layui 2.2.1 新增
-                            ,page: true
-                            ,cols: [[
-                                {field:'id', width:80, title: 'ID', sort: true}
-                                ,{field:'learningplancolumnName', width: 200, title: '列名', sort: true}
-                                ,{field:'learningplancolumnDesc', minWidth:400, title: '描述', sort: true}
-                                ,{fixed: 'right', width: 165, align:'center', toolbar: '#admin-template-bar'}
+                            , data: data.data.data
+                            , cellMinWidth: 80 //全局定义常规单元格的最小宽度，layui 2.2.1 新增
+                            , page: true
+                            , cols: [[
+                                {field: 'id', width: 80, title: 'ID', sort: true}
+                                , {field: 'learningPlanColumnName', width: 200, title: '列名', sort: true}
+                                , {field: 'learningPlanColumnDesc', minWidth: 400, title: '描述', sort: true}
+                                , {fixed: 'right', width: 165, align: 'center', toolbar: '#admin-template-bar'}
                             ]],
                             done: function (res, curr, count) {
                                 layer.msg(data.message)
                             }
                         });
+                    } else {
+                        layer.msg(data.message);
                     }
-
                 }
             });
 
             $('#btn-reload').on('click', function () {
 
                 $.ajax({
-                    url: path + 'learningplan/template',
+                    url: path + window.learning_plan_columns,
                     type: 'GET',
                     dataType: 'json',
                     beforeSend: function (xhr) {
@@ -147,15 +136,15 @@
                     });
                     console.log(data);
                     $('#id').val(data.id);
-                    $('#learningplancolumnName').val(data.learningplancolumnName);
-                    $('#learningplancolumnDesc').val(data.learningplancolumnDesc);
+                    $('#learningPlanColumnName').val(data.learningPlanColumnName);
+                    $('#learningPlanColumnDesc').val(data.learningPlanColumnDesc);
 
 
                     $('#btn-save').on('click', function () {
                         var dataStr = $('#template-form').serialize();
                         console.log(dataStr);
                         $.ajax({
-                            url: path + 'learningplan/template',
+                            url: path + window.learning_plan_column,
                             type: 'post',
                             data: dataStr,
                             dataType: 'json',
@@ -166,8 +155,8 @@
                                 if (data.status === 200) {
 
                                     obj.update({
-                                        learningplancolumnName: $('#learningplancolumnName').val(),
-                                        learningplancolumnDesc: $('#learningplancolumnDesc').val()
+                                        learningPlanColumnName: $('#learningPlanColumnName').val(),
+                                        learningPlanColumnDesc: $('#learningPlanColumnDesc').val()
                                     });
                                     layer.close(index);
                                 }
@@ -179,11 +168,11 @@
 
                 } else if (layEvent === 'del') {
 
-                    layer.confirm('真的删除行么', function(index){
+                    layer.confirm('真的删除行么', function (index) {
                         //向服务端发送删除指令
                         $.ajax({
                             type: 'delete',
-                            url: path + 'learningplan/template/' + data.id,
+                            url: path + window.learning_plan_column + "/" + data.id,
                             dataType: 'json',
                             beforeSend: function (xhr) {
                                 xhr.setRequestHeader('Authorization', localStorage.getItem('token'));
@@ -216,7 +205,7 @@
                     console.log($('#template-form').serialize());
                     $.ajax({
                         type: 'put',
-                        url: path + 'learningplan/template',
+                        url: path + window.learning_plan_column,
                         data: $('#template-form').serialize(),
                         dataType: 'json',
                         beforeSend: function (xhr) {
@@ -225,7 +214,7 @@
                         success: function (data) {
                             if (data.status === 200) {
                                 $.ajax({
-                                    url: path + 'learningplan/template',
+                                    url: path + window.learning_plan_columns,
                                     type: 'GET',
                                     dataType: 'json',
                                     beforeSend: function (xhr) {

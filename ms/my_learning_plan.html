@@ -71,7 +71,7 @@
                 if(type === 'bar1'){
                     $('#learning-plan-columns > ul').html('');
                     $.ajax({
-                        url: path + 'learningplan/template',
+                        url: path + window.learning_plan_columns,
                         type: 'get',
                         dataType: 'json',
                         beforeSend: function (xhr) {
@@ -84,7 +84,7 @@
                                 console.log(data);
                                 var columns = data.data.data;
                                 $.each(columns, function (index, elem) {
-                                    var content = '<li class="layui-field-title" style="color: #393D49;" onclick="onLearningPlanColumnClick(this)"><span>' + elem.learningplancolumnName + '</span></li><li class="layui-tab-title" style="height: 1px; background-color: #d7d7d7"> </li>';
+                                    var content = '<li class="layui-field-title" style="color: #393D49;" onclick="onLearningPlanColumnClick(this)"><span>' + elem.learningPlanColumnName + '</span></li><li class="layui-tab-title" style="height: 1px; background-color: #d7d7d7"> </li>';
                                     $('#learning-plan-columns > ul').append(content);
                                 });
                                 $('#learning-plan-columns').show(500);
@@ -107,29 +107,34 @@
                         '<img class=\'icon\' src=\'./img/icon/win10.png\'/>登录');
                     Win10_child.close();
                 });
+
             } else {
 
                 $.ajax({
-                    url: path + 'learningplan'
+                    url: path + window.learning_plan + "/owner"
                     ,type: 'GET'
                     ,dataType: 'json'
                     ,data: {token: token}
                     ,success: function (data) {
                         if (data.status === 500) {
-                            layer.alert(data.message, {
-                                skin: 'layui-layer-molv',
-                                closeBtn: 0
-                            }, function () {
-                                Win10_child.openUrl('./ms/login.html',
-                                    '<img class=\'icon\' src=\'./img/icon/win10.png\'/>登录');
-                                Win10_child.close();
-                            });
+                            layer.msg(data.message);
                         } else {
-
-                            var user = data.data.user;
-                            var form = data.data.code;
+                            var form = data.data.data[0];
 
                             localStorage.setItem('currFormId', form.id);
+
+                            var user = null;
+                            doAjax({
+                                action: window.user + "/" + form.ownerId
+                                ,async: false
+                                ,success: function(data) {
+                                    if (data.status === 500) {
+                                        layer.msg(data.message);
+                                        return false;
+                                    }
+                                    user = data.data.data;
+                                }
+                            });
 
                             $('#username').val(user.username);
                             var sex;
@@ -143,19 +148,31 @@
                             $('#sex').val(sex);
                             $('#phone').val(user.phone);
                             $('#createTime').val(form.createTime);
-                            var content_items = data.data.data;
-                            console.log(content_items);
-                            $.each(content_items, function (index, elem) {
 
+                            var content_items = null;
+                            doAjax({
+                                action: window.column_manager + "/form-id"
+                                ,data: {formId: form.id}
+                                ,success: function(data) {
+                                    if (data.status === 500) {
+                                        layer.msg(data.message);
+                                        return false;
+                                    }
+                                    content_items = data.data.data;
+                                }
+                            });
+
+                            $.each(content_items, function (index, elem) {
+                                console.error(elem);
                                 var column_content =
                                     '       <form class="layui-form-item layui-form-text layui-bg-green">\n' +
-                                    '            <label class="layui-form-label layui-bg-green">' + elem.learningplancolumnName + '</label>\n' +
+                                    '            <label class="layui-form-label layui-bg-green">' + elem.learningPlanColumnName + '</label>\n' +
                                     '            <input type="hidden" name="id" value=' + elem.id + '>\n' +
-                                    '            <input type="hidden" name="learningplanformId" value=' + elem.learningplanformId + '>\n' +
-                                    '            <input type="hidden" name="learningplancolumnName" value=' + elem.learningplancolumnName + '>\n' +
-                                    '            <input type="hidden" name="learningplancolumnId" value=' + elem.learningplancolumnId + '>\n' +
+                                    '            <input type="hidden" name="learningPlanFormId" value=' + elem.learningPlanFormId + '>\n' +
+                                    '            <input type="hidden" name="learningPlanColumnName" value=' + elem.learningPlanColumnName + '>\n' +
+                                    '            <input type="hidden" name="learningPlanColumnId" value=' + elem.learningPlanColumnId + '>\n' +
                                     '            <div class="layui-input-block">\n' +
-                                    '                <textarea placeholder="请输入内容" name="learningplancolumnContent" class="layui-textarea" onblur="saveLearningPlanColumnContent(this)">' + elem.learningplancolumnContent + '</textarea>\n' +
+                                    '                <textarea placeholder="请输入内容" name="learningPlanColumnContent" class="layui-textarea" onblur="saveLearningPlanColumnContent(this)">' + elem.learningPlanColumnContent + '</textarea>\n' +
                                     '            </div>\n' +
                                     '        </form>';
 
