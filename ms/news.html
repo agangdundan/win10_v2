@@ -20,14 +20,14 @@
 
             url: path + 'msg/lasted',
             type: 'get',
-            beforeSend: function (xhr) {
-                xhr.setRequestHeader('Authorization', localStorage.getItem('token'));
-            },
             success: function (data) {
-                //console.log(data);
-                var msgArr = data.data.data;
-                console.log(msgArr);
-                $('#body').html(msgArr[0].message);
+                if (data.status === 200) {
+                    var msgArr = data.data.data;
+                    $('#body').html(msgArr[0].message);
+                } else {
+                    $('#body').html("<center style='color: red;'><b>" + data.message + "</b></center>");
+                }
+
             }
 
         });

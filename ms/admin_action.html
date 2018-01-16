@@ -154,6 +154,15 @@
             '    </div>\n' +
             '</form>';
 
+        var content_of_resource =
+            '<form id="resource-form" class="layui-form layui-form-pane" action="" style="width: 90%; margin: 0 auto; margin-top: 20px;">\n' +
+            '    <div class="layui-form-item">\n' +
+            '        <label class="layui-form-label">Name</label>\n' +
+            '        <div class="layui-input-block">\n' +
+            '            <input type="text" name="name" required  lay-verify="required" placeholder="input resource name" autocomplete="off" class="layui-input">\n' +
+            '        </div>\n' +
+            '    </div>\n' +
+            '</form>';
 
         function renderTable(opts) {
             return table.render({
@@ -199,36 +208,32 @@
             });
 
             /**
-             * load the second table of roles
+             * load the third table of roles
              */
             doAjax({
-                action: window.permissions
+                action: window.roles
                 ,type: 'get'
                 ,async: false
-                ,success: function (data) {
+                ,success: function(data) {
                     if (data.status === 200) {
-                        tableOfPermission = renderTable({
-                            id: '#permission-form'
-                            , data: data.data.data
-                            , cols: [[
+                        tableOfRole = renderTable({
+                            id: '#role-form'
+                            ,data: data.data.data
+                            ,cols: [[
                                 {field: 'id', title: 'ID', width: 80, sort: true},
-                                {field: 'source', title: '资源'},
-                                {field: 'action', title: '操作', width: 120},
-                                {field: 'relation', title: '权限类型', minWidth: 120},
-                                {field: 'ownerId', title: 'Owner', minWidth: 120},
-                                {field: 'roleIds', title: 'RoleIds', width: 120, sort: true},
-                                {field: 'createTime', title: 'Time', width: 120, sort: true},
-                                {fixed: 'right', width: 165, align: 'center', toolbar: '#admin-group-bar'}
-                            ]],
-                            done: function () {
-
-                            }
+                                {field: 'name', title: 'Name'},
+                                {field: 'userIds', title: 'userIds', width: 120},
+                                {field: 'permissionIds', title: 'PermissionIds', minWidth: 120},
+                                {field: 'createTime', title: 'Time', minWidth: 120},
+                                {fixed: 'right', width: 165, align: 'center', toolbar: '#admin-role-bar'}
+                            ]]
                         });
                     } else {
                         layer.msg(data.message);
                     }
                 }
             });
+
 
             /**
              * load the third table of permissions
@@ -260,32 +265,39 @@
                 }
             });
 
+
+            /**
+             * load the second table of roles
+             */
             doAjax({
-                action: window.roles
+                action: window.permissions
                 ,type: 'get'
                 ,async: false
-                ,success: function(data) {
-                    tableOfRole = renderTable({
-                        id: '#role-form'
-                        ,data: data.data.data
-                        ,cols: [[
-                            {field: 'id', title: 'ID', width: 80, sort: true},
-                            {field: 'name', title: 'Name'},
-                            {field: 'userIds', title: 'userIds', width: 120},
-                            {field: 'permissionIds', title: 'PermissionIds', minWidth: 120},
-                            {field: 'createTime', title: 'Time', minWidth: 120},
-                            {fixed: 'right', width: 165, align: 'center', toolbar: '#admin-role-bar'}
-                        ]]
-                        ,
-
-                    });
+                ,success: function (data) {
                     if (data.status === 200) {
+                        tableOfPermission = renderTable({
+                            id: '#permission-form'
+                            , data: data.data.data
+                            , cols: [[
+                                {field: 'id', title: 'ID', width: 80, sort: true},
+                                {field: 'source', title: '资源'},
+                                {field: 'action', title: '操作', width: 120},
+                                {field: 'relation', title: '权限类型', minWidth: 120},
+                                {field: 'ownerId', title: 'Owner', minWidth: 120},
+                                {field: 'roleIds', title: 'RoleIds', width: 120, sort: true},
+                                {field: 'createTime', title: 'Time', width: 120, sort: true},
+                                {fixed: 'right', width: 165, align: 'center', toolbar: '#admin-group-bar'}
+                            ]],
+                            done: function () {
 
+                            }
+                        });
                     } else {
                         layer.msg(data.message);
                     }
                 }
             });
+
 
             $('#btn-reload').on('click', function () {
 
@@ -557,6 +569,38 @@
                     });
 
                     form.render();
+                });
+            });
+
+            $('#tab-resource').on('click', function(){
+                $('#btn-add').html('添加资源');
+                $('#btn-add').unbind('click');
+                $('#btn-add').on('click', function() {
+                    var index = layer.open({
+                        type: 1,
+                        title: 'Add Resource',
+                        skin: 'layui-layer-molv', //加上边框
+                        area: ['500px'], //宽高
+                        content: content_of_resource,
+                        btn: ['保存', '取消'],
+                        yes: function() {
+                            doAjax({
+                                action: window.resource
+                                ,data: $('#resource-form').serializeArray()
+                                ,type: 'put'
+                                ,success: function (data) {
+                                    if (data.status === 200) {
+                                        reloadTableIns({
+                                            tabIns: tableOfResource
+                                            ,action: window.resources
+                                        });
+                                        layer.close(index);
+                                    }
+                                    layer.msg(data.message);
+                                }
+                            });
+                        }
+                    });
                 });
             });
 
